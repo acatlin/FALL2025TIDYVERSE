@@ -101,8 +101,10 @@ Revision/Addition Description and Link:
 * Revision/Addition Description and Link:
 
 # Pricilla N.
-
+filter(), mutate(), summarize(), group_by(), select(), and ggplot()
 * Initial Description and Link:
+* Shows practical, reproducible use cases of functions for data manipulation, transformation, and visualization.
+* https://github.com/prnakyazze94/Data_607/blob/main/TidyVerse%20EXTEND%20Assignment
 
 * Revision/Addition Description and Link:
 
