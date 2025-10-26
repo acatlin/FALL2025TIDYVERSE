@@ -43,7 +43,8 @@ Revision/Addition Description and Link:
 # Haoming C.
 
 * Initial Description and Link:
-
+https://www.kaggle.com/datasets/nelgiriyewithana/new-york-housing-market
+This dataset provides data about nyc real estate market in the past years.
 * Revision/Addition Description and Link:
 
 # Jacob S.
