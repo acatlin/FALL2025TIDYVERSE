@@ -49,8 +49,12 @@ Revision/Addition Description and Link:
 # Jacob S.
 
 * Initial Description and Link:
+* Showed some functions in stringr package like str_length, str_count, str_replace, and str_split
+* TidyVerse Assignment CREATE JRS - stringr.Rmd
 
 * Revision/Addition Description and Link:
+* 
+* TidyVerse Assignment CREATE JRS - stringr.Rmd
 
 # James C.
 
