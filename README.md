@@ -149,7 +149,7 @@ Practical, reproducible use cases of functions for data manipulation, transforma
 - 
 # Taha M.
 
-* Initial Description and Link:
+* Initial Description and Link: https://www.kaggle.com/datasets/carrie1/ecommerce-data/data
 
 * Revision/Addition Description and Link:
 
