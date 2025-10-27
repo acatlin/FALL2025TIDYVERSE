@@ -10,11 +10,17 @@ Revision/Addition Description and Link:
 * Modified ggplot/forcats example to demonstrate sorting, other category
 * ggplot_forcats.qmd
 
-# Arutam Bosco A.
+# Arutam Antunish.
 
 * Initial Description and Link:
+  
+https://www.kaggle.com/datasets/crawford/80-cereals
+
+Using nutritional data such as calories, sugar, fiber, and rating to explore cereal health profiles
 
 * Revision/Addition Description and Link:
+  
+Functions used: read_csv(), filter(), group_by(), summarise(), arrange(), slice_head(), ggplot()
 
 # Cai L.
 
