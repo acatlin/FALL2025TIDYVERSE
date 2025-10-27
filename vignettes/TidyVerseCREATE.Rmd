@@ -1,0 +1,58 @@
+---
+title: "TidyVerse Create Assignment"
+author: "Paula Brown"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r choose_CRAN_Mirror, echo=TRUE}
+options(repos = c(CRAN = "https://cran.rstudio.com"))
+```
+## Install and load necessary packages
+
+```{r init2, echo=TRUE}
+req_packages <- c("tidyverse")
+for (pkg in req_packages) {
+  if (!require(pkg, character.only = TRUE)) {
+    message(paste("Installing package:", pkg))
+    install.packages(pkg, dependencies = TRUE)
+  } else {
+    message(paste(pkg, " already installed."))
+  }
+  library(pkg, character.only = TRUE)
+}
+```
+# Save link to .csv file to reference later.
+```{r assign_link}
+url <- "https://raw.githubusercontent.com/PaulaB989/TVCreate/main/recent-grads.csv"
+```
+# Read the .csv file from GitHub using the "read_csv" function from the readr package which is part of the "TidyVerse".
+```{r read_csv}
+recent_grads <- read_csv(url)
+```
+# Wrangle the data with dplyr.
+```{r data_wrangling}
+# Filter out rows with missing Median income and select top 10 majors
+top_majors <- recent_grads %>%
+  filter(!is.na(Median)) %>%
+  arrange(desc(Median)) %>%
+  slice_head(n = 10)
+```
+# Visualize with ggplot2
+```{r visualize_data}
+# Create a horizontal bar chart
+ggplot(top_majors, aes(x = reorder(Major, Median), y = Median)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Top 10 College Majors by Median Income",
+    x = "Major",
+    y = "Median Income ($)",
+    caption = "Source: recent-grads.csv via PaulaB989/TVCreate"
+    # Data initially from https://github.com/fivethirtyeight/data/blob/4c1ff5e3aef1816ae04af63218015066e186c147/college-majors/recent-grads.csv"
+  ) +
+  theme_minimal()
+```
