@@ -120,9 +120,19 @@ Practical, reproducible use cases of functions for data manipulation, transforma
 
 # Randy John H.
 
-* Initial Description and Link:
+* Initial Description and Link:This vignette demonstrates the use of several **TidyVerse** packages to explore and analyze the 'Selfie and ID 65,000+ Photos' dataset from Kaggle. This dataset contains photos of individuals and their identification documents for facial recognition and KYC (Know Your Customer) tasks.
+**Dataset Source:** [Kaggle - Selfie and ID Dataset](https://www.kaggle.com/datasets/simongraves/selfie-and-id-65000-photos)
+
 
 * Revision/Addition Description and Link:
+- **dplyr**: Data manipulation (filter, mutate, group_by, summarize, arrange)
+- **ggplot2**: Data visualization
+- **tidyr**: Data reshaping and tidying
+- **stringr**: String manipulation
+- **forcats**: Factor handling
+https://github.com/Vaene/FALL2025TIDYVERSERandyHowk/blob/main/Randy_Howk_TidyVerse_Vignette.Rmd
+### Data:
+https://github.com/Vaene/FALL2025TIDYVERSERandyHowk/tree/main/archive
 
 # Sabina B.
 
