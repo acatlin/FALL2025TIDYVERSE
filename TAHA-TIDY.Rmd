@@ -30,7 +30,9 @@ theme_set(theme_minimal())
 Note (setup): This chunk loads packages and sets global chunk options. Keep echo = TRUE for graders to inspect code; we suppress warnings/messages to keep output clean. If a grader needs full diagnostics, set warning = TRUE temporarily. Installing packages is handled in the Prerequisites section.
 
 # Overview
-
+**PLEASE NOTE DATA SET CAN BE FOUND USING THIS LINK: https://www.kaggle.com/datasets/carrie1/ecommerce-data/data**
+**INSTRUCTIONS: When downloaded the csv file you have to right click in the directory the download is saved, and extract all. Once extract is completed then open the data folder extracted within it you will find the data.csv and drag it to the driectory you are working on in order to work on the extention of the rmd file**
+**If you have any further qustions feel free to reach out: tahamalik1965@gmail.com**
 This vignette demonstrates how to use TidyVerse tools (mainly dplyr, tidyr, ggplot2) to load, clean, analyze, and visualize the UCI "Online Retail" dataset (actual transactions from a UK-based online retail). The goal is to provide a clear, reproducible example suitable for inclusion in the course repository and to earn full credit for the assignment.
 
 Contents:
@@ -337,3 +339,4 @@ test_that("rfm produced for customers", {
 })
 message("All basic checks passed.")
 ```
+
