@@ -1,0 +1,184 @@
+---
+title: 'Data 607: Tidyverse Vignette, Using the Purr Package'
+author: "Wendy Romero"
+date: "2025-10-26"
+output:
+    html_document:
+      theme: default
+      highlight: tango
+      toc: true
+      toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Introduction: Using Tidyverse's Purr Package 
+
+In this vignette we will see how we can use tidyverse's purr package to avoid having to repeatedly write the same code.
+
+The dataset we will be using is the Student Scores dataset from Kaggles, which can be found here: https://www.kaggle.com/datasets/mexwell/student-scores.
+
+The data set contains the following information: 
+
+- id: Unique identifier assigned to each student
+- first_name: The first name of a student.
+- last_name: The last name of a student.
+- email: The email address of a student.
+- gender: The gender of a student.
+- math_score: Math class score (0 – 100).
+- history_score: History score (0 – 100).
+- physics_score: Physics score (0 – 100).
+- chemistry_score: Chemistry score (0 – 100).
+- biology_score: Biology score (0 – 100).
+- english_score: English score (0 – 100).
+- geography_score: Geography score (0 – 100).
+- part_time_job: This indicates whether a student is engaged in a part-time job.
+- absence_days: The total count of days the student was not present in class due to various reasons.
+- extracurricular_activities: This captures whether a student participates in extracurricular activities. 
+- weekly_self_study_hours: This represents the number of hours a student spends on self-study each week.
+- career_aspiration: This column records the student’s career aspirations or goals for the future. 
+
+We will be using purr's **map()** and **map_dbl()** functions as well as it's **walk2()** function. 
+
+purr's family of map() functions apply a function to each element in a list or atomic vector. 
+And purr's walk2() function takes two input lists and for each pair of elements from two inputs it and executes a side effect (i.e. it can print plots, save files, etc.). The walk2() function does not return something the way the family of map() functions do. We will be using the walk2() function to print plots we will make and save them under individual names.
+
+
+We will use the following tidyverse packages 
+
+-  The **purr** package 
+-  The **dplyr** package  
+-  The **readr** package
+-  The **ggplot2** package
+
+Because each of these packages is included in the tidyverse library, you need only import the tidyverse library as a whole.
+
+We need tidyverse's dplyr package to take a glimpse at our data and rename columns in our data set.
+We need tidyverse's readr package to read in our CSV data and it's ggplot2 package to plot our data.
+
+## Reading in the Data
+
+First, we must read in our student performance data and save it to a data frame. The CSV file containing this data is in a separate repository.
+
+```{r }
+url <- "https://raw.githubusercontent.com/WendyR20/Data-607-Tidyverse-/refs/heads/main/student-scores.csv"
+score_df <- read_csv(url)
+```
+
+Now we can take a look at our data frame and check if our data frame contains any NA values.
+
+```{r }
+glimpse(score_df)
+
+
+sum(is.na(score_df))
+
+```
+
+
+Let's rename our score columns using dplyr's rename() function.
+
+```{r }
+score_df <- score_df %>% 
+  rename(Math = math_score,
+         History = history_score,
+         Physics = physics_score,
+         Chemistry = chemistry_score,
+         Biology = biology_score,
+         English = english_score,
+         Geography = geography_score)
+
+```
+
+## Using map() 
+
+What if we were interested in the distribution of scores in each subject individually? And say once we plotted the individual distributions we wanted to save them all at the same time?
+
+purr's map() function makes it very easy to create a plot for the distribution of student scores for each subject without having to repeat the code 7 times.
+
+First, we will save the names of the scores columns (just the names not the actual columns) in a vector, then we can pass this to the purr package map() function and then later to the map_dbl() and walk2() functions. While you can pass the map() function an entire data frame (if it makes sense to apply the same function to each column in the data frame) in this case and in many cases we don't want to apply a function to the entire data frame but to a subset of columns in the data frame.
+
+```{r }
+
+scores <-c("Math", "History", "Physics", "Chemistry",
+           "Biology", "English", "Geography")
+
+```
+
+
+You can pass map() the vector of the score column names and map() will run ggplot() for each subject column.
+
+```{r }
+dist_plots <- map(scores, function(subject) {
+  ggplot(score_df, aes(x =.data[[subject]])) +
+    geom_histogram(bins = 15, fill = "steelblue", color = "white") +
+    labs( 
+      title = paste("Distribution of", subject, "Scores"),
+        x = "Scores",
+        y = "Count") 
+} 
+)
+
+```
+
+The map() function will always return a list!
+
+Let's view the first and last plots
+
+```{r}
+
+#you need to use the double brackets [[ ]] to extract the actual ggplot object from the list and display it.
+
+dist_plots[[1]]
+dist_plots[[7]]
+```
+
+
+## Using walk2()
+
+We can also save all the distribution plots at once using purr's walk2() function.
+
+```{r}
+
+walk2(dist_plots, scores,
+      ~ ggsave(paste0(.y, "_distribution_boxplot.png"), .x))
+
+```
+
+When you run the last bit of code the seven plots for the distribution of scores for each subject will have saved on your local device individually, please check your working directory!
+
+## Using map_dbl()
+
+What if we wanted to know if there is any correlation between the number of hours students spend studying on their own and their scores within each subject?
+
+We can use the cor() function which quantifies the strength and direction of the linear relationship between variables, with values ranging from -1 (perfect negative correlation) to 1 (perfect positive correlation), and 0 indicating no linear correlation to answer this question.
+
+To avoid having to repeatedly write the code out for each subject we can use purr's map_dbl() function, which works like it's map() function only it returns our results list in double format.
+
+```{r}
+
+correlations <- map_dbl(scores, ~cor(score_df[[.x]], 
+                                         score_df$weekly_self_study_hours))
+
+```
+
+Now let's save our correlation values in a data frame and print it out.
+
+```{r}
+
+score_study_df <- tibble(Subject = scores,
+                         Correlation_Self_Study = correlations) 
+  
+score_study_df <- score_study_df %>%  
+  arrange(Correlation_Self_Study) 
+
+print(score_study_df)
+
+```
+
+
+As we can see there is a weak correlation (as the correlation coefficients fall between 0 and 0.3), between the scores students received in their subjects and the hours they spent weekly studying on their own for all subjects except Math. For Math, the correlation is moderate (as the correlation coefficient is between 0.3 and 0.5).
+

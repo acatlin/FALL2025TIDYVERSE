@@ -160,7 +160,8 @@ Practical, reproducible use cases of functions for data manipulation, transforma
 
 # Wendy R.
 
-* Initial Description and Link:
+* Initial Description and Link: Using tidyverse's purr package to avoid having to repeatedly write the same code. Using the map(), map_dbl() and walk2() functions we will create and save score distribution plots per subject and investigate if there is any correlation between student scores and the number of hours they spent studying on their own.
+* Kaggle Dataset: https://www.kaggle.com/datasets/mexwell/student-scores
 
 * Revision/Addition Description and Link:
 
