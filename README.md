@@ -24,9 +24,9 @@ Revision/Addition Description and Link:
 
 # Candace G.
 
-* Initial Description and Link:
+* Initial Description and Link:https://rpubs.com/Candace63/TidyverseVignette    My Rpubs Tidyverse Vignette
 
-* Revision/Addition Description and Link:
+* Revision/Addition Description and Link: https://rpubs.com/Candace63/TidyverseVignette
 
 # Catherine Lysette D.
 
