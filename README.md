@@ -50,8 +50,12 @@ This dataset provides data about nyc real estate market in the past years.
 # Jacob S.
 
 * Initial Description and Link:
+* Showed some functions in stringr package like str_length, str_count, str_replace, and str_split via fast food data set https://www.kaggle.com/datasets/tan5577/nutritonal-fast-food-dataset
+* TidyVerse Assignment CREATE JRS - stringr.Rmd
 
 * Revision/Addition Description and Link:
+* "Adding Jacob Shapiro stringr vignette"
+* TidyVerse Assignment CREATE JRS - stringr.Rmd
 
 # James C.
 
