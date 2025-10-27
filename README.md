@@ -108,8 +108,29 @@ https://github.com/sachikapoor99-byte/FALL2025TIDYVERSE/pull/1/commits/9368829e8
 # Paula D B.
 
 * Initial Description and Link:
+  ##Dataset Overview: Recent College Graduates
 
+  **Source:** [FiveThirtyEight GitHub Repository](https://github.com/fivethirtyeight/data/blob/master/college-majors/recent-grads.csv)  
+  **Original Story:** *The Economic Guide to Picking a College Major* by FiveThirtyEight  
+  **Data Origin:** U.S. Census Bureau — American Community Survey (ACS) 2010–2012 Public Use Microdata Series (PUMS)
+
+  ##Description
+  The `recent-grads.csv` dataset provides a comprehensive snapshot of earnings and employment outcomes for recent college graduates in the United States.     It includes:
+    - **Basic earnings metrics**: Median income, income percentiles (25th and 75th), and unemployment rates
+    - **Labor force participation**: Employment status and full-time employment rates
+    - **Demographic breakdowns**: Gender distribution across majors
+    - **Job types**: Share of graduates working in STEM, service, or other fields
+
+  This dataset is ideal for exploring how college major choice impacts early career outcomes.
+
+   ##Additional Resources
+    - [ACS PUMS Data Access](http://www.census.gov/programs-surveys/acs/data/pums.html)
+    - [ACS PUMS Documentation](http://www.census.gov/programs-surveys/acs/technical-documentation/pums.html)
+  
 * Revision/Addition Description and Link:
+  ** My TidyVerse vignette explores dplyr, ggplot2, and readr packages from the TidyVerse.
+  https://github.com/PaulaB989/TVCreate/blob/main/TidyVerseCREATE.Rmd
+  Data now linked here: https://github.com/PaulaB989/TVCreate/blob/main/recent-grads.csv
 
 # Pricilla N.
 filter(), mutate(), summarize(), group_by(), select(), and ggplot() 
