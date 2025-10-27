@@ -1,0 +1,101 @@
+---
+title: "TidyVerse CREATE"
+author: "Haoming Chen"
+date: "2025-10-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This dataset is about the New York City house prices in the past years, which is sourced from Kaggle: https://www.kaggle.com/datasets/nelgiriyewithana/new-york-housing-market.  I am going to use the csv file that I have modified, in which the redundant columns have been removed and the data has been cleaned.
+
+```{r}
+library(tidyverse)
+
+house <- read.csv('https://raw.githubusercontent.com/vincent-usny/nychouse/refs/heads/main/nychouse.csv')
+
+house <- house %>%
+  mutate(price_per_sqft = round(Price / Propertysqft))
+
+# Compare prices by types
+house %>%
+  group_by(Type) %>%
+  summarise(
+    avg_price = mean(Price),
+    median_price = median(Price)) %>%
+  arrange(desc(avg_price))
+```
+
+
+```{r}
+# Compare prices by cities
+house %>%
+  group_by(City) %>%
+  summarise(
+    avg_price = mean(Price),
+    median_price = median(Price)
+  ) %>%
+  arrange(desc(median_price))
+```
+
+```{r}
+# compare average beds and baths in cities
+house %>%
+  group_by(City) %>%
+  summarise(
+    avg_beds = round(mean(Beds)),
+    avg_bath = round(mean(Bath))
+  ) 
+```
+
+```{r}
+# compare price and sqft between condo and house
+house %>%
+  filter(
+    Type %in% c("Condo","House"),
+    Price < 2000000) %>% # narrow the y-axis
+  ggplot(aes(x = Propertysqft, y = Price, color = Type)) +
+  geom_point(alpha = 0.6, na.rm=TRUE) +
+  labs(
+    title = "Price vs Propertysqft",
+    x = "Propertysqft",
+    y = "Price"
+  )
+```
+
+**It approximately shows that the houses have larger propertysqft when having the same price with condos.**
+
+```{r}
+city_house <- house %>%
+  filter(Type %in% c("House")) %>%
+  group_by(City,Type) %>%
+  summarise(median_price = median(Price, na.rm=TRUE), .groups = "drop") %>%
+  arrange(desc(median_price))
+```
+
+```{r}
+# Compare top 10 cities' houses with highest median price
+top10_cities <- city_house %>%
+  slice_max(median_price, n=10) %>%
+  arrange(desc(median_price))
+
+ggplot(top10_cities, aes(x = reorder(City, -median_price), y = median_price)) +
+  geom_col(fill = "steelblue") +
+  labs(
+    title = "Top 10 cities' median prices",
+    x = "Cities",
+    y = " Median Price"
+  ) +
+  theme(axis.text.x = element_text(size = 8))
+```
+
+
+# Conclusion
+
+This assignment performs some data analysis using group_by(), summarise(), 
+arrange(), etc, and also comes up with two plots which visualize some patterns
+of nyc's houses market.
