@@ -1,0 +1,112 @@
+---
+title: "Corporate Profitability Analysis Using the Tidyverse"
+author: "Escarlet Gabriel Vicente"
+date: "2025-10-26"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+## Introduction
+
+This vignette demonstrates how to use the Tidyverse to analyze corporate financial data from the Fortune Top 1000 Companies by Revenue (2022) dataset, obtained from Kaggle.
+The goal is to explore business metrics such as revenue, profit, and profit margin, and identify which companies generate the highest profits relative to their revenues.
+
+**Data Source:** [Fortune Top 1000 Companies by Revenue (2022), Kaggle](https://www.kaggle.com/datasets/surajjha101/fortune-top-1000-companies-by-revenue-2022)  
+**License:** CC BY-NC-SA 4.0
+
+
+---
+
+## Load Libraries
+We start by loading the Tidyverse package, which contains tools for data manipulation (dplyr), data cleaning (tidyr), and visualization (ggplot2).
+```{r}
+library(tidyverse)
+```
+
+## Import Dataset
+The dataset is read into R using read_csv(). We then preview the first few rows to understand the structure of the data.
+```{r}
+fortune <- read_csv("Fortune 1000 Companies by Revenue.csv")
+
+head(fortune)
+```
+
+## Clean and Prepare Data
+The dataset includes numeric values stored as text, such as revenues and profits with $ and commas.
+These symbols are removed, and the columns are converted into numeric format. Missing values are filtered out to ensure clean analysis.
+```{r}
+fortune <- fortune %>%
+mutate(
+revenues = as.numeric(gsub("[$,]", "", revenues)),
+profits = as.numeric(gsub("[$,]", "", profits)),
+employees = as.numeric(gsub(",", "", employees))
+) %>%
+filter(!is.na(revenues), !is.na(profits))
+
+head(fortune)
+```
+
+## Calculate Profit Margin
+We create a new variable, *profit_margin*, to measure the percentage of profit earned for every dollar of revenue.
+This metric allows us to assess how efficiently companies convert sales into profit.
+```{r}
+fortune_clean <- fortune %>%
+filter(revenues > 0) %>%
+mutate(profit_margin = round((profits / revenues) * 100, 2))
+
+head(fortune_clean)
+```
+
+## Top 10 Companies by Revenue
+To identify the largest corporations in the dataset, we select the top 10 companies ranked by total revenue.
+The table displays each company’s rank, name, total revenue, profit, and calculated profit margin.
+```{r}
+top10_revenue <- fortune_clean %>%
+slice_max(order_by = revenues, n = 10) %>%
+select(rank, name, revenues, profits, profit_margin)
+
+top10_revenue
+```
+
+## Visualization 1: Revenue vs. Profit
+This scatter plot compares revenue and profit among the top 30 companies.
+It shows how high revenues do not always guarantee high profits, revealing differences in efficiency between companies.
+```{r}
+fortune_clean %>%
+slice_max(order_by = revenues, n = 30) %>%
+ggplot(aes(x = revenues, y = profits, color = name)) +
+geom_point(size = 3, alpha = 0.8) +
+labs(
+title = "Revenue vs Profit for Top 30 Companies (Fortune 1000 - 2022)",
+x = "Revenue (USD Millions)",
+y = "Profit (USD Millions)",
+color = "Company"
+) +
+theme_minimal()
+```
+
+## Visualization 2: Top Companies by Profit Margin
+This bar chart highlights the top 10 companies with the highest profit margins, showing which firms are most successful at converting revenue into profit.
+It provides insight into which companies achieve efficiency over scale.
+```{r}
+top10_margin <- fortune_clean %>%
+slice_max(order_by = profit_margin, n = 10)
+
+ggplot(top10_margin, aes(x = reorder(name, profit_margin), y = profit_margin, fill = name)) +
+geom_col(show.legend = FALSE) +
+coord_flip() +
+labs(
+title = "Top 10 Companies by Profit Margin (Fortune 1000 - 2022)",
+x = "Company",
+y = "Profit Margin (%)"
+) +
+theme_minimal()
+```
+
+## Insights and Conclusion
+The results indicate a clear distinction between firms leading in revenue and those excelling in profitability. While Walmart and Amazon remain market leaders by scale, firms like Bio-Rad Laboratories and eBay stand out for their efficient profit generation. Through this analysis, the Tidyverse proved effective for structuring, transforming, and visualizing corporate financial data.

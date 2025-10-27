@@ -42,7 +42,7 @@ Functions used: read_csv(), filter(), group_by(), summarise(), arrange(), slice_
 
 # Escarlet G.
 
-* Initial Description and Link:
+* Initial Description and Link: [Corporate Profitability Analysis using the Tidyverse](https://github.com/egabrielvice/FALL2025TIDYVERSE/blob/main/Corporate_Profitability_Analysis.Rmd)
 
 * Revision/Addition Description and Link:
 
