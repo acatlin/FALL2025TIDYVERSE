@@ -125,7 +125,47 @@ PS4_sales %>%
 ```
 Again, the data for the two consoles appear to be similar. However, Sony Interactive makes a notable contribution to global sales for the PS4 console. This is interesting and could be the result of Sony exclusives on the PS4: another motivation for people to buy the PS4.
 
+## Extension: Genre-Based Sales Comparison (By Arutam Antunish)
+We’ll compare total global sales by genre for both consoles. This adds a new dimension to the analysis and uses group_by(), summarise(), mutate(), and ggplot().
+
+### Global Sales by Genre – Xbox One
+
+```{r}
+XboxOne_sales %>%
+  group_by(Genre) %>%
+  summarise(total_sales = sum(Global, na.rm = TRUE)) %>%
+  arrange(desc(total_sales)) %>%
+  ggplot(aes(x = reorder(Genre, total_sales), y = total_sales)) +
+  geom_bar(stat = "identity", fill = "darkcyan") +
+  coord_flip() +
+  labs(title = "Global Sales by Genre – Xbox One",
+       x = "Genre",
+       y = "Total Sales") +
+  scale_y_continuous(labels = function(x) paste0(x / 1e6, "M")) +
+  theme_minimal()
+```
+
+### Global Sales by Genre – PS4
+
+```{r}
+PS4_sales %>%
+  group_by(Genre) %>%
+  summarise(total_sales = sum(Global, na.rm = TRUE)) %>%
+  arrange(desc(total_sales)) %>%
+  ggplot(aes(x = reorder(Genre, total_sales), y = total_sales)) +
+  geom_bar(stat = "identity", fill = "darkorange") +
+  coord_flip() +
+  labs(title = "Global Sales by Genre – PS4",
+       x = "Genre",
+       y = "Total Sales") +
+  scale_y_continuous(labels = function(x) paste0(x / 1e6, "M")) +
+  theme_minimal()
+```
+
+These charts reveal which genres dominate global sales for each console. For example, if Action or Shooter games lead on both platforms, it may reflect broader player preferences across the industry.
+
 ## Summary
+
 
 In this vignette, we explored some basic data tidying and analysis using the libraries and functions:
 <br>
