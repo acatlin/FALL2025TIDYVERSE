@@ -1,0 +1,175 @@
+---
+title: "Tidyverse_Candace"
+author: "Candace Grant"
+date: "2025-10-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)       # Import Excel files
+
+
+
+library(dplyr)        # Data manipulation
+library(tidyr)        # Data tidying
+library(lubridate)    # Date/time handling
+
+library(yardstick)    # Tidy model metrics
+
+# Read Excel file
+
+power_data <- read_excel("Power_Forecast_2014.xlsx")
+
+# Display structure
+
+glimpse(power_data)
+
+```
+
+
+
+```{r}
+
+# Read with explicit date handling
+atm_data <- read_excel("ATM624Data.xlsx") %>%
+  mutate(
+    # Force proper date conversion from Excel numeric format
+    DATE = as.Date(as.numeric(DATE), origin = "1899-12-30")
+  )
+
+# Check result
+cat("Date range:", as.character(min(atm_data$DATE, na.rm = TRUE)), "to", 
+    as.character(max(atm_data$DATE, na.rm = TRUE)), "\n")
+
+# Column names
+cat("Column Names:\n")
+print(names(atm_data))
+cat("\n")
+head(atm_data, 10)
+sum(is.na(atm_data$Cash))
+
+
+# Dataset Overview
+cat("Overview of the Dataset:\n")
+glimpse(atm_data, 10)
+
+
+#Missing data assessment
+# Unique ATM identifiers
+unique_atms <- unique(atm_data$ATM)
+print(unique_atms)
+cat("\nNumber of ATM machines:", length(unique_atms[!is.na(unique_atms)]), "\n\n")
+
+
+# Missing values by ATM
+cat("Missing Cash values by ATM:\n")
+missing_by_atm <- atm_data %>%
+  group_by(ATM) %>%
+  summarise(
+    Total_Records = n(),
+    Missing_Cash = sum(is.na(Cash)),
+    Missing_Percentage = round(sum(is.na(Cash)) / n() * 100, 2)
+  )
+print(missing_by_atm)
+cat("\n")
+
+
+# Missing values by ATM - sorted by most missing to least
+missing_by_atm <- atm_data %>%
+  group_by(ATM) %>%
+  summarise(
+    Total_Records = n(),
+    Missing_Cash = sum(is.na(Cash)),
+    Missing_Pct = round(sum(is.na(Cash)) / n() * 100, 2)
+  ) %>%
+  arrange(desc(Missing_Cash))  # ← Highest missing first
+
+
+# Check where missing values actually are
+
+cat("Missing Values by Column:\n")
+cat("Cash:", sum(is.na(atm_data$Cash)), "\n")
+cat("ATM:", sum(is.na(atm_data$ATM)), "\n")
+cat("DATE:", sum(is.na(atm_data$DATE)), "\n\n")
+
+# Cross-check: rows with missing ATM but present Cash
+atm_data %>%
+  filter(is.na(ATM)) %>%
+  summarise(
+    Count = n(),
+    Has_Cash = sum(!is.na(Cash)),
+    Has_Date = sum(!is.na(DATE))
+  )
+
+# Check for Duplicates 
+duplicates <- atm_data %>%
+  group_by(DATE, ATM) %>%
+  summarise(Count = n(), .groups = 'drop') %>%
+  filter(Count > 1)
+
+cat("Duplicate DATE-ATM combinations:", nrow(duplicates), "\n")
+if(nrow(duplicates) > 0) {
+  cat("\nDuplicate records found:\n")
+  print(duplicates)
+  cat("\n")
+} else {
+  cat("No duplicate DATE-ATM combinations found.\n\n")
+}
+
+
+# Date range by ATM
+cat("Date Range by ATM:\n")
+date_range_by_atm <- atm_data %>%
+  filter(!is.na(ATM)) %>%
+  group_by(ATM) %>%
+  summarise(
+    Start_Date = min(DATE, na.rm = TRUE),
+    End_Date = max(DATE, na.rm = TRUE),
+    Days_Span = as.numeric(difftime(max(DATE, na.rm = TRUE), 
+                                    min(DATE, na.rm = TRUE), 
+                                    units = "days"))
+  )
+print(date_range_by_atm)
+
+# --- Sample Size per ATM ---
+
+sample_size <- atm_data %>%
+  filter(!is.na(ATM)) %>%
+  group_by(ATM) %>%
+  summarise(
+    Total_Records = n(),
+    Non_Missing_Cash = sum(!is.na(Cash)),
+    Missing_Cash = sum(is.na(Cash))
+  )
+print(sample_size)
+cat("\n")
+
+# --- Summary Statistics for Each ATM ---
+
+
+summary_stats <- atm_data %>%
+  filter(!is.na(ATM) & !is.na(Cash)) %>%
+  group_by(ATM) %>%
+  summarise(
+    Count = n(),
+    Mean = round(mean(Cash, na.rm = TRUE), 2),
+    Median = round(median(Cash, na.rm = TRUE), 2),
+    Std_Dev = round(sd(Cash, na.rm = TRUE), 2),
+    Min = round(min(Cash, na.rm = TRUE), 2),
+    Max = round(max(Cash, na.rm = TRUE), 2),
+    Q1 = round(quantile(Cash, 0.25, na.rm = TRUE), 2),
+    Q3 = round(quantile(Cash, 0.75, na.rm = TRUE), 2)
+  )
+print(summary_stats)
+cat("\n")
+
+#is.na(atm_data)
+
+```
+
+```
+
