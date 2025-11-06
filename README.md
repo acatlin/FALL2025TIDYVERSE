@@ -92,7 +92,7 @@ Added a simple Tidyverse vignette demonstrating data wrangling with `dplyr` usin
 RPubs Link: https://rpubs.com/klkid969/week9_tidyverse
 
 * Revision/Addition Description and Link:
- N/A
+  Added a mpg_summary to show the most fuel efficient brands.
 
 # Luis A H.
 
