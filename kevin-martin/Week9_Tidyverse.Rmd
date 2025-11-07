@@ -102,6 +102,23 @@ First, we **peeked** at the columns; then we **created** a simple mileage score 
 
 - Compare by `class` (e.g., compact vs. suv)  
 - Use `filter()` to focus on recent model years (`year`)  
+```{r}
+mpg_summary <- mpg %>%
+filter(year >= 2008) %>%                         # keep only recent model years
+mutate(
+# Create a simple efficiency score: average of city & highway MPG
+efficiency = (cty + hwy) / 2
+) %>%
+group_by(manufacturer) %>%
+summarize(
+avg_eff = mean(efficiency, na.rm = TRUE),      # average efficiency for each brand
+n = n()                                        # number of observations per manufacturer
+) %>%
+arrange(desc(avg_eff)) %>%                       # sort from most to least efficient
+slice_head(n = 5)                                # keep only the top 5 brands
+
+mpg_summary
+```
 - Add a second plot with error bars (variation per brand)
 
 ---
