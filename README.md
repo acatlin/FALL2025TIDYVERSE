@@ -26,7 +26,7 @@ Revision/Addition Description and Link:
 
 * Initial Description and Link:https://rpubs.com/Candace63/TidyverseVignette    My Rpubs Tidyverse Vignette
 
-* Revision/Addition Description and Link: 
+* Revision/Addition Description and Link: https://rpubs.com/Candace63/1366221
 
 # Catherine Lysette D.
 
