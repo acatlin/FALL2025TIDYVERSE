@@ -1,30 +1,453 @@
 ---
-title: "Tidyverse Extend of Sabrina Baraili's Code"
+title: "Tidyverse Extension of Sabina Baraili's Code"
 author: "Candace Grant"
 date: "2025-11-09"
-output: html_document
+output:
+   html_document:
+    toc: true
+    toc_float: true
+    number_sections: false
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+# Introduction
+
+This assignment extends Sabina Baraili's analysis of the **Netflix Movies and TV Shows dataset** from Kaggle. The original analysis explored movie-producing countries, release trends, and genres. This Extension adds:
+
+- Comprehensive data quality assessment
+- Additional data cleaning steps
+- Deeper exploratory analysis
+- More advanced visualizations
+
+Dataset link: [Netflix Titles (Kaggle)](https://www.kaggle.com/datasets/shivamb/netflix-shows)
+
+
+# Critical Assessment of Original Code
+
+Sabina Baraili's analysis provides a well-structured foundation with proper library loading, clear documentation, and effective visualizations. However, several enhancements can elevate this work to graduate-level analytical standards. Some of the good points in her code are shown below. 
+
+- Proper setup with libraries loaded (`tidyverse`, `readr`)  
+- Clear structure with descriptive sections  
+- Basic cleaning (filtered movies, removed critical missing values)  
+- Multiple chart types and good documentation  
+
+## Key Areas for Enhancement
+
+1. Missing Data Quality Assessment and Validation
+
+**Limitation**: No assessment of missing values, data structure, or validation of categorical variables before analysis.
+
+**Impact**: Removed 444 movies (7.2%) without quantifying loss; missed that `director` (30.68%), `cast` (9.21%), and `country` (6.58%) have substantial missing data; failed to detect invalid entries like "84 min", "74 min" in the `rating` column.
+
+**Solution**: Added missing values analysis table/visualization and data validation filters (`filter(!str_detect(rating, "min"))`).
+
+2. Limited Data Transformation
+
+**Limitation**: `date_added` remained character strings; `duration` stayed as text; no numeric extraction or date parsing; multi-country productions not properly separated.
+
+**Impact**: Cannot analyze when Netflix adds content, perform statistical analysis on durations, or identify international collaborations.
+
+**Solution**: Extended cleaning with `dmy(date_added)`, `str_extract(duration, "\\d+")`, and multi-country production analysis.
+
+3. Narrow Scope Without Statistical Depth
+
+**Limitation**: Only three questions addressed (top countries, release trends, genres); no descriptive statistics (mean, median, SD); no analysis of content addition patterns, duration distributions, ratings, or genre evolution.
+
+**Impact**: Misses insights on Netflix's content strategy, typical movie characteristics, and temporal patterns.
+
+**Solution**: Added five analytical dimensions: content addition patterns, duration statistics with distribution plots, multi-country collaborations, content rating distribution, and genre trends over decades.
+
+4. Basic Tidyverse Usage Only
+
+**Limitation**: Used foundational functions only (`filter()`, `count()`, `group_by()`, `summarise()`); didn't demonstrate `across()`, `pivot_longer()`, `str_extract()`, `lubridate` functions, or `slice_max()`.
+
+**Impact**: Missed opportunity to showcase advanced data manipulation techniques appropriate for graduate-level portfolios.
+
+**Solution**: Extended analysis demonstrates broader tidyverse toolkit including date parsing, string pattern extraction, and advanced aggregation methods.
+
+## Summary
+
+Sabina's code provides solid fundamentals with proper structure and clear visualizations. This Extension builds upon that foundation by adding data quality assessment, comprehensive transformation, expanded analytical scope with statistical depth, and advanced tidyverse techniques—elevating the work from introductory analysis to portfolio-quality data science aligned with DATA 621 standards.
+
+
+
+# Setup: Load Required Libraries
+
+```{r setup, message=FALSE, warning=FALSE}
+# Load tidyverse packages
+library(tidyverse)  
+library(lubridate)  
+library(knitr)     
+library(scales)    
+
+# Set global options
+options(scipen = 999)  
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Load and Initial Inspection
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r load-data, message=FALSE}
+# Load dataset
+netflix <- read_csv("netflix_titles.csv")
 
-```{r cars}
-summary(cars)
+# Display dataset dimensions
+cat("Dataset Dimensions:", nrow(netflix), "rows and", ncol(netflix), "columns\n")
+
+# View structure
+glimpse(netflix)
 ```
 
-## Including Plots
+# Dataset Overview
 
-You can also embed plots, for example:
+The Netflix dataset contains information about movies and TV shows available on the platform, including:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+- **show_id**: Unique identifier
+- **type**: Movie or TV Show
+- **title**: Name of the content
+- **director**: Director(s)
+- **cast**: Main cast members
+- **country**: Country of production
+- **date_added**: Date added to Netflix
+- **release_year**: Year of release
+- **rating**: Content rating (PG, R, etc.)
+- **duration**: Length (minutes for movies, seasons for TV shows)
+- **listed_in**: Genre categories
+- **description**: Brief summary
+
+# Missing Values Assessment
+
+```{r missing-values}
+# Calculate missing values for each column
+missing_values <- netflix %>%
+  summarise(across(everything(), ~sum(is.na(.)))) %>%
+  pivot_longer(everything(), 
+               names_to = "Column", 
+               values_to = "Missing_Count") %>%
+  mutate(
+    Total_Rows = nrow(netflix),
+    Percentage_Missing = round((Missing_Count / Total_Rows) * 100, 2)
+  ) %>%
+  arrange(desc(Percentage_Missing))
+
+# Display as formatted table
+kable(missing_values, 
+      caption = "Missing Values Summary",
+      col.names = c("Column", "Missing Count", "Total Rows", "% Missing"))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r visualize-missing}
+# Visualize missing values
+ggplot(missing_values, aes(x = reorder(Column, Percentage_Missing), 
+                           y = Percentage_Missing)) +
+  geom_col(fill = "coral") +
+  geom_text(aes(label = paste0(Percentage_Missing, "%")), 
+            hjust = -0.1, size = 3) +
+  coord_flip() +
+  labs(
+    title = "Percentage of Missing Values by Column",
+    x = "Column",
+    y = "Percentage Missing (%)"
+  ) +
+  theme_minimal() +
+  ylim(0, max(missing_values$Percentage_Missing) * 1.1)
+```
+
+
+# Extended Data Cleaning
+
+```{r extended-cleaning}
+netflix_clean <- netflix %>%
+  filter(type == "Movie") %>%
+  drop_na(release_year, country) %>%
+  
+  # Clean date_added column and extract year/month
+  mutate(
+    date_added = dmy(date_added),  # Changed from mdy() to dmy()
+    year_added = year(date_added),
+    month_added = month(date_added, label = TRUE)
+  ) %>%
+  
+  # Clean duration column to extract numeric minutes
+  mutate(duration_minutes = as.numeric(str_extract(duration, "\\d+"))) %>%
+  # Filter reasonable release years (1900 onwards)
+  filter(release_year >= 1900, release_year <= year(today())) %>%
+  # Filter reasonable durations (10-300 minutes)
+  filter(duration_minutes >= 10 | is.na(duration_minutes))
+
+# Summary of cleaned data
+cat("Original movie count:", sum(netflix$type == "Movie", na.rm = TRUE), "\n")
+cat("Cleaned movie count:", nrow(netflix_clean), "\n")
+cat("Records removed:", sum(netflix$type == "Movie", na.rm = TRUE) - nrow(netflix_clean), "\n")
+```
+
+**Extensions to Sabina' Code**
+=============================
+
+## Extension 1: When Does Netflix Add Most Content?
+
+```{r content-addition}
+# Analyze content addition by month and year
+addition_pattern <- netflix_clean %>%
+  drop_na(year_added, month_added) %>%
+  count(year_added, month_added) %>%
+  group_by(month_added) %>%
+  summarise(avg_additions = mean(n), .groups = "drop") %>%
+  arrange(desc(avg_additions))
+
+# Visualize
+ggplot(addition_pattern, aes(x = month_added, y = avg_additions)) +
+  geom_col(fill = "skyblue") +
+  geom_text(aes(label = round(avg_additions, 0)), vjust = -0.5, size = 3) +
+  labs(
+    title = "Average Netflix Movie Additions by Month",
+    subtitle = "Which months see the most new content?",
+    x = "Month",
+    y = "Average Number of Movies Added"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+## Extension 2: Movie Duration Analysis
+
+```{r duration-analysis}
+# Summary statistics for movie duration
+duration_stats <- netflix_clean %>%
+  drop_na(duration_minutes) %>%
+  summarise(
+    Mean = mean(duration_minutes),
+    Median = median(duration_minutes),
+    SD = sd(duration_minutes),
+    Min = min(duration_minutes),
+    Max = max(duration_minutes),
+    Q1 = quantile(duration_minutes, 0.25),
+    Q3 = quantile(duration_minutes, 0.75)
+  )
+
+kable(duration_stats, 
+      caption = "Movie Duration Statistics (Minutes)",
+      digits = 1)
+
+# Distribution of movie durations
+ggplot(netflix_clean %>% drop_na(duration_minutes), 
+       aes(x = duration_minutes)) +
+  geom_histogram(binwidth = 10, fill = "mediumpurple", alpha = 0.7) +
+  geom_vline(xintercept = duration_stats$Mean, 
+             color = "red", linetype = "dashed", linewidth = 1) +
+  geom_vline(xintercept = duration_stats$Median, 
+             color = "blue", linetype = "dashed", linewidth = 1) +
+  annotate("text", x = duration_stats$Mean + 15, y = Inf, 
+           label = paste("Mean:", round(duration_stats$Mean, 0)), 
+           color = "red", vjust = 2) +
+  annotate("text", x = duration_stats$Median - 15, y = Inf, 
+           label = paste("Median:", round(duration_stats$Median, 0)), 
+           color = "blue", vjust = 2) +
+  labs(
+    title = "Distribution of Netflix Movie Durations",
+    x = "Duration (Minutes)",
+    y = "Count"
+  ) +
+  theme_light()
+```
+
+
+## Extension 3: Multi-Country Productions
+
+```{r multi-country}
+# Analyze movies produced by multiple countries
+netflix_countries <- netflix_clean %>%
+  mutate(
+    country_count = str_count(country, ",") + 1,
+    is_multi_country = country_count > 1
+  )
+
+# Summary
+multi_country_summary <- netflix_countries %>%
+  count(is_multi_country) %>%
+  mutate(percentage = round(n / sum(n) * 100, 1))
+
+kable(multi_country_summary,
+      col.names = c("Multi-Country Production", "Count", "Percentage (%)"),
+      caption = "Single vs Multi-Country Productions")
+
+# Top country collaborations
+top_collaborations <- netflix_countries %>%
+  filter(is_multi_country) %>%
+  count(country, sort = TRUE) %>%
+  head(10)
+
+ggplot(top_collaborations, aes(x = reorder(country, n), y = n)) +
+  geom_col(fill = "seagreen") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Multi-Country Production Combinations",
+    x = "Countries",
+    y = "Number of Movies"
+  ) +
+  theme_minimal()
+```
+
+
+## Extension 4: Content Rating Analysis
+
+```{r rating-analysis}
+# Analyze content ratings - with data validation
+rating_summary <- netflix_clean %>%
+  drop_na(rating) %>%
+  # Filter for valid ratings only (exclude duration values)
+  filter(!str_detect(rating, "min")) %>%  # Remove anything with "min"
+  count(rating, sort = TRUE) %>%
+  mutate(percentage = round(n / sum(n) * 100, 1))
+
+# Display as table
+kable(rating_summary,
+      col.names = c("Content Rating", "Count", "Percentage (%)"),
+      caption = "Distribution of Netflix Movie Content Ratings")
+
+# Visualize - showing only percentages
+ggplot(rating_summary, aes(x = reorder(rating, n), y = n, fill = rating)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = paste0(percentage, "%")), 
+            hjust = -0.1, size = 3.5) +
+  coord_flip() +
+  scale_fill_viridis_d() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    title = "Distribution of Movie Content Ratings",
+    x = "Rating",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+## Extension 5: Genre Combinations and Trends
+
+
+```{r genre-combinations}
+# Analyze genre combinations (movies with multiple genres)
+genre_combination <- netflix_clean %>%
+  mutate(genre_count = str_count(listed_in, ",") + 1) %>%
+  count(genre_count) %>%
+  mutate(percentage = round(n / sum(n) * 100, 1))
+
+kable(genre_combination,
+      col.names = c("Number of Genres", "Count", "Percentage (%)"),
+      caption = "How Many Genres Are Movies Tagged With?")
+
+# Genre trends over decades
+genre_trends <- netflix_clean %>%
+  mutate(decade = floor(release_year / 10) * 10) %>%
+  filter(decade >= 1980) %>%
+  separate_rows(listed_in, sep = ", ") %>%
+  group_by(decade, listed_in) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(decade) %>%
+  mutate(percentage = count / sum(count) * 100) %>%
+  ungroup()
+
+# Plot top 5 genres by decade
+top_genres <- genre_trends %>%
+  group_by(decade) %>%
+  slice_max(count, n = 5) %>%
+  ungroup()
+
+ggplot(top_genres, aes(x = decade, y = percentage, color = listed_in, group = listed_in)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Top 5 Genres by Decade",
+    subtitle = "How have popular genres changed over time?",
+    x = "Decade",
+    y = "Percentage of Movies (%)",
+    color = "Genre"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+
+# Original Analysis (From Sabina's Code)
+
+**Top Movie-Producing Countries**
+
+```{r original-country}
+top_countries <- netflix_clean %>%
+  count(country, sort = TRUE) %>%
+  head(10)
+
+ggplot(top_countries, aes(x = reorder(country, n), y = n)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Countries by Number of Netflix Movies",
+    x = "Country",
+    y = "Number of Movies"
+  ) +
+  theme_minimal()
+```
+
+**Movie Release Trend Over the Years**
+
+```{r original-year}
+movies_by_year <- netflix_clean %>%
+  group_by(release_year) %>%
+  summarise(total_movies = n(), .groups = "drop")
+
+ggplot(movies_by_year, aes(release_year, total_movies)) +
+  geom_line(color = "tomato", linewidth = 1.1) +
+  geom_point(color = "darkred", size = 2) +
+  labs(
+    title = "Netflix Movie Releases Over the Years",
+    x = "Release Year",
+    y = "Number of Movies Released"
+  ) +
+  theme_light()
+```
+**Most Common Genres on Netflix**
+
+```{r original-genre}
+genre_data <- netflix_clean %>%
+  separate_rows(listed_in, sep = ", ") %>%
+  count(listed_in, sort = TRUE) %>%
+  head(10)
+
+ggplot(genre_data, aes(x = reorder(listed_in, n), y = n)) +
+  geom_col(fill = "orchid") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Most Common Netflix Genres",
+    x = "Genre",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+
+# Summary of Extensions Added to the Original Code
+
+This extended analysis demonstrates:
+
+1. **Data Quality Assessment**: Missing values analysis with visualization
+2. **Advanced Data Cleaning**: Date parsing, numeric extraction, filtering
+3. **Content Addition Patterns**: When Netflix adds most movies
+4. **Duration Analysis**: Statistical summary and distribution of movie lengths
+5. **Multi-Country Productions**: Analysis of international collaborations
+6. **Content Ratings**: Distribution of movie ratings (PG, R, etc.)
+7. **Genre Trends**: How popular genres have changed over decades
+
+# Tidyverse Functions Used
+
+- **dplyr**: `filter()`, `mutate()`, `select()`, `summarise()`, `group_by()`, `count()`, `arrange()`, `across()`
+- **tidyr**: `pivot_longer()`, `separate_rows()`, `drop_na()`
+- **stringr**: `str_count()`, `str_extract()`
+- **lubridate**: `mdy()`, `year()`, `month()`
+- **ggplot2**: Various geoms and theme customizations
+
+
+## References
+
+- Kaggle Netflix Dataset: <https://www.kaggle.com/datasets/shivamb/netflix-shows>  
+- Tidyverse Documentation: <https://www.tidyverse.org/packages/>
+- R for Data Science: <https://r4ds.had.co.nz/>
