@@ -52,7 +52,10 @@ Functions used: read_csv(), filter(), group_by(), summarise(), arrange(), slice_
 https://www.kaggle.com/datasets/nelgiriyewithana/new-york-housing-market
 This dataset provides data about nyc real estate market in the past years.
 * Revision/Addition Description and Link:
-
+* Extend assignment:
+  Data source: https://www.kaggle.com/datasets/anandshaw2001/video-game-sales
+  The analysis extends based on James Chun's video games comparison.
+  Function extended: mean(),median(), IQR(), geom_histogram(), summary()
 # Jacob S.
 
 * Initial Description and Link:
