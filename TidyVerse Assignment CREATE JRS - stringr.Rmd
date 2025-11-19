@@ -32,7 +32,7 @@ The "stringr" (pronounce "stringer") package is a package within the TidyVerse t
 You can install tidyverse, or just the stringr package.
 
 ```{r, results="hide", message=FALSE}
-install.packages("tidyverse")
+#install.packages("tidyverse")
 library(tidyverse)
 ```
 
@@ -105,3 +105,143 @@ str_split(food6$Company, "(?=[A-Z])", simplify = TRUE)
 ## Summary
 
 In this vignette we explored the stringr package and some functions that can be utilized on a sample fast food data set.
+
+
+
+
+## Extended Code -- Wendy Romero
+
+We can continue to explore the functions offered by the `stringr` package using the **fast food dataset** from Jacob's earlier example.
+
+### Stringr's str_unique Function
+
+
+Let's use the `str_unique()` function from `stringr` to find the number of unique fast food restaurants  in our dataset and then the names of these unique fast food restaurants.
+
+```{r num unique fast food restaurants}
+unique_companies <- food$Company %>% str_unique()
+
+num_companies<- length(unique_companies)
+```
+
+Great, now we know that there are `r num_companies` unique fast food restaurants in our dataset, let's print their names.
+
+```{r print fast food restaurants }
+print(unique_companies)
+```
+
+### Stringr's str_detect Function
+
+Now, what if we were curious about how many products of a certain type were sold at the fast food restaurants in our dataset?
+
+Well, as we can use the `str_detect` function! 
+
+Let's first find how many products sold at all the fast food restaurants in our dataset have the name burger in them.
+
+```{r burgers}
+burger_items <- food %>% 
+  filter(str_detect(food$Item, "burger"))
+
+num_burger <- length(burger_items$Item)
+```
+
+
+It seems there are only `r num_burger` products in our dataset with burger in the name, let's take a look at the full name of each of the `r num_burger` products and which restaurant offers the product on their menu.
+
+
+```{r print burger items}
+print(burger_items %>% 
+        select(Company,Item))
+```
+
+**Let's now find how many chicken type products are sold at all the fast food restaurants in our dataset**
+
+```{r chicken}
+chicken_items <- food %>% 
+  filter(str_detect(food$Item, "chicken"))
+
+num_chicken <- length(chicken_items$Item)
+
+```
+
+It seems there are only `r num_chicken` products in our dataset with burger in the name. Let's take a look at the full name of each of the `r num_chicken` products and which restaurants offers the products on their menu.
+
+``` {r print chicken}
+print(chicken_items %>% 
+        select(Company,Item))
+
+``` 
+
+
+Why did we see that there are only three products offered by restaurants in our dataset that have "chicken" in the name? Well, it's because str_detect is by default case-sensitive, to make it case-insensitive we must combine it with a regex function as done in the next section.
+
+
+```{r chicken 2}
+#str_detect + regex
+
+chicken_items2 <- food %>% 
+  filter(str_detect(food$Item, regex("chicken", ignore_case = TRUE)))
+
+#number of chicken products in data, case-insensitive
+
+n_chicken <- length(chicken_items2$Item)
+```
+
+
+Now that we have made str_detect case-insensitive by using with a regex pattern, we see that there are `r n_chicken` products offered by restaurants with the word chicken or Chicken in the name. Let us take a look at the first 10 of these products and the companies that offer them.
+
+
+```{r chicken items 2 }
+#first 10 chicken products in our data set
+
+chicken_items2 %>% 
+    select(Company,Item) %>%
+  head(10)
+
+```
+
+
+### Relationship Between Protein and Calories for Chicken Products 
+
+Now that we have created a data frame that holds all the items with *chicken* or *Chicken* in the name, from each of the fast food restaurants in our dataset, let's explore the question: Does there seem to be a relationship between the protein content and the calories of chicken products offered across the fast food restaurants in our dataset?
+
+
+Before we can plot and explore the relationship between protein and calories for chicken products in our dataset, let's first tidy our data. We need to rename the `Protein\n(g)` column to an easier to read name so as to give ggplot no issues. We must also convert the `Protein\n(g)` and `Calories` columns from character data types to numeric data types. 
+
+```{r clean chicken prod df}
+
+#renaming protein column
+chicken_items2 <- chicken_items2 %>%
+  rename(Protein_g = `Protein\n(g)`)
+
+
+#converting protein and calories columns to numeric 
+
+chicken_items2$Calories <-as.numeric(chicken_items2$Calories)
+
+chicken_items2$Protein_g <-as.numeric(chicken_items2$Protein_g)
+
+```
+
+
+
+Now, we can plot and explore the relationship between protein and calories for chicken products in our dataset.
+
+```{r chicken product plot}
+
+ggplot(chicken_items2, aes(x = Protein_g, y = Calories)) +
+  geom_point(col="steelblue", na.rm = TRUE)+
+  geom_smooth(method = lm, color = "darkred", na.rm = TRUE) +
+  labs(
+    title = "Protein vs Calories in Chicken Products",
+    subtitle = "Offered by Mcdonald's, Wendy's, Burger King, \n KFC, Taco Bell and Pizza Hut",
+    x = "Protein (in grams)",
+    y = "Calories"
+  )+
+  theme_minimal()
+
+```
+
+
+Based on our plot of protein vs calories for chicken products in our dataset, it does seem there is a relationship between protein and calories, more specifically it seems that as the protein content in a chicken product offered by a fast food restaurant increases so does the caloric content.
+

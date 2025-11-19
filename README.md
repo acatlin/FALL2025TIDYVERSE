@@ -56,6 +56,7 @@ This dataset provides data about nyc real estate market in the past years.
   Data source: https://www.kaggle.com/datasets/anandshaw2001/video-game-sales
   The analysis extends based on James Chun's video games comparison.
   Function extended: mean(),median(), IQR(), geom_histogram(), summary()
+
 # Jacob S.
 
 * Initial Description and Link:
@@ -65,6 +66,13 @@ This dataset provides data about nyc real estate market in the past years.
 * Revision/Addition Description and Link:
 * "Adding Jacob Shapiro stringr vignette"
 * TidyVerse Assignment CREATE JRS - stringr.Rmd
+
+Extend assignment: Wendy Romero
+
+* Initial Description and Link: Extending Jacob's exploration of the stringr package, 
+by using the str_unique and str_detect functions from the stringr package on the fast food dataset from
+Jacob's vignette
+* Kaggle Dataset: https://www.kaggle.com/datasets/tan5577/nutritonal-fast-food-dataset
 
 # James C.
 
