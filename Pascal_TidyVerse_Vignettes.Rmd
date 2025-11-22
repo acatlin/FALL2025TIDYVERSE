@@ -134,7 +134,7 @@ ggplot(data= top10_Breeds, aes(x = fct_reorder(Breed, Breed, length), y = 1, fil
   coord_flip() +
   scale_y_continuous(labels = scales::percent) +
   labs(
-    title = "Spay/Neuter Status by Top 5 Dog Breeds in Bite Incidents",
+    title = "Spay/Neuter Status by Top 5 Dog Breeds in Bite Incidents for 2021",
     x = "Dog Breed",
     y = "Proportion of Incidents",
     fill = "Spay/Neuter Status") +
@@ -167,23 +167,159 @@ NYC_Dog_Bites2019 <- NYC_Dogs_Bites %>%
 head(NYC_Dog_Bites2019,10)
 ```
 
+## Data Analysis
 
-```{r count-gender}
+### Repeat Analysis
+
+The first analysis done will be a repeat of Pascal's analysis, to determine if the ***NYC_Dog_Bites2019*** data has any significant differences from the ***NYC_Dog_Bites_2021***.
+
+```{r count-breeds}
   
 # Data preparation for analysis
 
-NYC_Dog_Bites2021 <- NYC_Dog_Bites2021 %>%
+NYC_Dog_Bites2019 <- NYC_Dog_Bites2019 %>%
   filter(Breed != "UNKNOWN")  # remove the Unknown dogs breed
 
 # Let's count the incidents by breed
 
-DogsBites_by_breed <- NYC_Dog_Bites2021 %>%
+DogsBites_by_breed_2019 <- NYC_Dog_Bites2019 %>%
   group_by(Breed) %>%
   summarise(n_incidents = n()) %>%
   arrange(desc(n_incidents))
 
-DogsBites_by_breed
+DogsBites_by_breed_2019
 
 ```
 
+```{r Breed-vs-SpayNeuter}
 
+Breed_SpayNeuter_2019 <- NYC_Dog_Bites2019 %>%
+  count(Breed, SpayNeuter) %>%
+  group_by(Breed) %>%
+  mutate(percent = 100 * n / sum(n)) %>%
+  arrange(desc(n))
+
+head(Breed_SpayNeuter_2019,10)
+
+
+```
+
+```{r Top10Breeds-plot}
+
+# let's get the top 10 Breeds by count
+
+top10_Breeds_2019 <- NYC_Dog_Bites2019 %>%
+                filter(!is.na(Breed), 
+                str_to_lower(Breed) != "unknown",
+                !is.na(SpayNeuter)) %>%
+                add_count(Breed, name = "breed_total") %>%
+                filter(breed_total %in% tail(sort(unique(breed_total)), 10))
+
+# Create plot
+
+ggplot(data= top10_Breeds_2019, aes(x = fct_reorder(Breed, Breed, length), y = 1, fill = SpayNeuter)) +
+  geom_col(position = "fill") +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Spay/Neuter Status by Top 5 Dog Breeds in Bite Incidents for 2019",
+    x = "Dog Breed",
+    y = "Proportion of Incidents",
+    fill = "Spay/Neuter Status") +
+  theme_minimal()
+```
+
+### New Analysis
+
+The new analysis I will perform will count the incidents by gender.
+
+```{r count-gender}
+  
+# Let's count the incidents by gender
+
+DogsBites_by_gender_2019 <- NYC_Dog_Bites2019 %>%
+  group_by(Gender) %>%
+  summarise(n_incidents = n()) %>%
+  arrange(desc(n_incidents))
+
+DogsBites_by_gender_2019
+
+```
+
+```{r count-gender}
+  
+# Let's count the incidents by gender
+
+DogsBites_by_gender_2021 <- NYC_Dog_Bites2021 %>%
+  group_by(Gender) %>%
+  summarise(n_incidents = n()) %>%
+  arrange(desc(n_incidents))
+
+DogsBites_by_gender_2021
+
+```
+
+```{r Gender-vs-SpayNeuter}
+
+Gender_SpayNeuter_2019 <- NYC_Dog_Bites2019 %>%
+  group_by(Gender) %>%
+  count(Gender, SpayNeuter) %>%
+  mutate(percent = 100 * n / sum(n)) %>%
+  arrange(desc(n))
+
+head(Gender_SpayNeuter_2019,10)
+
+
+```
+
+### Data Visualization
+
+```{r}
+genders_2019 <- NYC_Dog_Bites2019 %>%
+                filter(!is.na(Gender), 
+                str_to_lower(Gender) != "unknown",
+                !is.na(SpayNeuter)) %>%
+                add_count(Gender, name = "gender_total") %>%
+                filter(gender_total %in% tail(sort(unique(gender_total)), 10))
+
+# Create plot
+
+ggplot(data= genders_2019, aes(x = fct_reorder(Gender, Gender, length), y = 1, fill = SpayNeuter)) +
+  geom_col(position = "fill") +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Spay/Neuter Status by Genders in Bite Incidents for 2019",
+    x = "Dog Gender",
+    y = "Proportion of Incidents",
+    fill = "Spay/Neuter Status") +
+  theme_minimal()
+```
+
+```{r}
+genders_2021 <- NYC_Dog_Bites2021 %>%
+                filter(!is.na(Gender), 
+                str_to_lower(Gender) != "unknown",
+                !is.na(SpayNeuter)) %>%
+                add_count(Gender, name = "gender_total") %>%
+                filter(gender_total %in% tail(sort(unique(gender_total)), 10))
+
+# Create plot
+
+ggplot(data= genders_2021, aes(x = fct_reorder(Gender, Gender, length), y = 1, fill = SpayNeuter)) +
+  geom_col(position = "fill") +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Spay/Neuter Status by Genders in Bite Incidents for 2021",
+    x = "Dog Gender",
+    y = "Proportion of Incidents",
+    fill = "Spay/Neuter Status") +
+  theme_minimal()
+```
+
+## Conclusion
+
+My initial assumption that the years would affect the number of bite incidents was correct in that there was a noticeable increase in bites from 2019. However, there was not much of a change from the top ten breeds responsible. Pitbulls remain as the greatest offender, with German Shepherds and Shih Tzu behind them.  
+<br>
+The addtional analysis I performed on the genders revealed that a huge majority of the bites were from males/unknowns in 2019 and 2021. The visualizations for the Spay/Neuter stats vs Gender also do not reveal much preference for being spayed/neutered and biting for either gender. Although, interestingly the unknowns have a huge difference. 
