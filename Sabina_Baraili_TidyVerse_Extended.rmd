@@ -1,0 +1,205 @@
+---
+title: "TidyVerse - NYC Housing Analysis (Extension)"
+author:
+  - "Haoming Chen (Original Author)"
+  - "Sabina Baraili (Extended Analysis)"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(scales)
+```
+
+# Introduction
+
+This dataset is about the New York City house prices in the past years, which is sourced from Kaggle: https://www.kaggle.com/datasets/nelgiriyewithana/new-york-housing-market.  I am going to use the csv file that I have modified, in which the redundant columns have been removed and the data has been cleaned.
+
+```{r}
+library(tidyverse)
+
+house <- read.csv('https://raw.githubusercontent.com/vincent-usny/nychouse/refs/heads/main/nychouse.csv')
+
+house <- house %>%
+  mutate(price_per_sqft = round(Price / Propertysqft))
+
+# Compare prices by types
+house %>%
+  group_by(Type) %>%
+  summarise(
+    avg_price = mean(Price),
+    median_price = median(Price)) %>%
+  arrange(desc(avg_price))
+```
+
+
+```{r}
+# Compare prices by cities
+house %>%
+  group_by(City) %>%
+  summarise(
+    avg_price = mean(Price),
+    median_price = median(Price)
+  ) %>%
+  arrange(desc(median_price))
+```
+
+```{r}
+# compare average beds and baths in cities
+house %>%
+  group_by(City) %>%
+  summarise(
+    avg_beds = round(mean(Beds)),
+    avg_bath = round(mean(Bath))
+  ) 
+```
+
+```{r}
+# compare price and sqft between condo and house
+house %>%
+  filter(
+    Type %in% c("Condo","House"),
+    Price < 2000000) %>% # narrow the y-axis
+  ggplot(aes(x = Propertysqft, y = Price, color = Type)) +
+  geom_point(alpha = 0.6, na.rm=TRUE) +
+  labs(
+    title = "Price vs Propertysqft",
+    x = "Propertysqft",
+    y = "Price"
+  )
+```
+
+**It approximately shows that the houses have larger propertysqft when having the same price with condos.**
+
+```{r}
+city_house <- house %>%
+  filter(Type %in% c("House")) %>%
+  group_by(City,Type) %>%
+  summarise(median_price = median(Price, na.rm=TRUE), .groups = "drop") %>%
+  arrange(desc(median_price))
+```
+
+```{r}
+# Compare top 10 cities' houses with highest median price
+top10_cities <- city_house %>%
+  slice_max(median_price, n=10) %>%
+  arrange(desc(median_price))
+
+ggplot(top10_cities, aes(x = reorder(City, -median_price), y = median_price)) +
+  geom_col(fill = "steelblue") +
+  labs(
+    title = "Top 10 cities' median prices",
+    x = "Cities",
+    y = " Median Price"
+  ) +
+  theme(axis.text.x = element_text(size = 8))
+```
+
+
+# Conclusion
+
+This assignment performs some data analysis using group_by(), summarise(), 
+arrange(), etc, and also comes up with two plots which visualize some patterns
+of nyc's houses market.
+
+---
+
+# Extended Analysis (Sabina Baraili)
+
+Below is an extension of the original vignette with additional TidyVerse transformations and visualizations.
+
+## 1. Price Per Sqft by Property Type
+
+```{r}
+house %>%
+  group_by(Type) %>%
+  summarise(
+    avg_ppsqft = mean(price_per_sqft, na.rm = TRUE),
+    median_ppsqft = median(price_per_sqft, na.rm = TRUE),
+    count = n()
+  ) %>%
+  arrange(desc(avg_ppsqft))
+```
+
+## 2. Property Size Category vs Median Price
+
+```{r}
+house %>%
+  mutate(size_category = case_when(
+    Propertysqft < 800 ~ "Small",
+    Propertysqft >= 800 & Propertysqft < 1500 ~ "Medium",
+    TRUE ~ "Large"
+  )) %>%
+  group_by(size_category) %>%
+  summarise(
+    median_price = median(Price, na.rm = TRUE),
+    avg_ppsqft = mean(price_per_sqft, na.rm = TRUE)
+  ) %>%
+  arrange(desc(median_price))
+```
+
+### Visualization: Property Size vs Price
+
+```{r}
+house %>%
+  mutate(size_category = case_when(
+    Propertysqft < 800 ~ "Small",
+    Propertysqft >= 800 & Propertysqft < 1500 ~ "Medium",
+    TRUE ~ "Large"
+  )) %>%
+  ggplot(aes(x = size_category, y = Price)) +
+  geom_boxplot(fill = "skyblue") +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Price Distribution by Property Size Category",
+    x = "Size Category",
+    y = "Price"
+  )
+```
+
+## 3. Price Per Sqft Distribution
+
+```{r}
+ggplot(house, aes(x = price_per_sqft)) +
+  geom_histogram(bins = 30, fill = "purple", alpha = 0.6) +
+  labs(
+    title = "Distribution of Price Per Sqft",
+    x = "Price Per Sqft",
+    y = "Count"
+  )
+```
+
+## 4. Bedrooms vs Price
+
+```{r}
+house %>%
+  filter(Beds <= 6, Price < 2500000) %>%
+  ggplot(aes(x = Beds, y = Price)) +
+  geom_point(alpha = 0.4, color = "darkgreen") +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Relationship Between Bedrooms and Price",
+    x = "Bedrooms",
+    y = "Price"
+  )
+```
+
+## 5. Beds and Baths Correlation
+
+```{r}
+house %>%
+  summarise(
+    correlation_beds_baths = cor(Beds, Bath, use = "complete.obs")
+  )
+```
+
+## Conclusion
+
+The extended portion of this vignette builds on the original NYC housing analysis by introducing additional TidyVerse techniques that provide deeper insight into the dataset. New transformations such as creating property size categories, calculating price-per-square-foot statistics, and exploring numerical relationships helped highlight structural patterns in the market. Visualizations added in this section offer clearer comparisons across property sizes, price distributions, and bedroom–price trends.
+
+These additions demonstrate how TidyVerse functions can be combined to enrich exploratory data analysis and uncover insights that were not visible in the original summary alone.

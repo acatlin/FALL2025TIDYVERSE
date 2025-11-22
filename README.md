@@ -177,6 +177,13 @@ Practical, reproducible use cases of functions for data manipulation, transforma
     2. TidyVerse Documentation: https://www.tidyverse.org/packages/
     
 * Revision/Addition Description and Link:
+  Extended Haoming Chen’s NYC Housing Tidyverse vignette by adding:
+    - New derived variables (price_per_sqft, decade)
+    - Additional summaries across property type, age group, and neighborhood
+    - Visualizations showing price distributions, top neighborhoods, and the bedroom–price relationship
+  File added: Tidyverse_Extended_Sabina.Rmd
+  Dataset Source:
+    https://www.kaggle.com/datasets/nelgiriyewithana/new-york-housing-market
 
 # Sachi K.
 
