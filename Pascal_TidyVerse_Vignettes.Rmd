@@ -149,7 +149,41 @@ ggplot(data= top10_Breeds, aes(x = fct_reorder(Breed, Breed, length), y = 1, fil
 
 
 
+# TidyVerse Extension - James Chun
+
+I will be extending on Pascal's code in two ways. Firstly, I will focus on the dog bites from 2019. The motivation is that 2020-2021 were the COVID pandemic years, where quarantine and social distancing policies were in effect. As a result, this may have affected the number of person-person (and thus person-dog) interactions there were for those years. Therefore, perhaps analyzing a year before the pandemic would reveal some different results.  
+<br>
+The second extension will be some additional analysis, as described later.  
+
+## Data Cleaning
+
+```{r Data-Clean}
+
+NYC_Dog_Bites2019 <- NYC_Dogs_Bites %>%
+  select(-UniqueID,-Species,-ZipCode) %>% #remove UniqueID column
+  mutate(Year = year(mdy(DateOfBite))) %>%  # convert the Date format MDY to only year
+  filter(Year == 2019)  # keep only year 2021
+
+head(NYC_Dog_Bites2019,10)
+```
 
 
+```{r count-gender}
+  
+# Data preparation for analysis
+
+NYC_Dog_Bites2021 <- NYC_Dog_Bites2021 %>%
+  filter(Breed != "UNKNOWN")  # remove the Unknown dogs breed
+
+# Let's count the incidents by breed
+
+DogsBites_by_breed <- NYC_Dog_Bites2021 %>%
+  group_by(Breed) %>%
+  summarise(n_incidents = n()) %>%
+  arrange(desc(n_incidents))
+
+DogsBites_by_breed
+
+```
 
 
