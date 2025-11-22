@@ -67,7 +67,7 @@ This dataset provides data about nyc real estate market in the past years.
 * TidyVerse Assignment CREATE JRS - stringr.Rmd
 
 # James C.
-
+* CREATE Assignment
 * Initial Description and Link:
 Video game sales from 
 
@@ -78,6 +78,9 @@ Using primarily PS4 and Xbox One Game Sales
 * Revision/Addition Description and Link:
 
 Functions used: getURL(), mutate(), arrange(), ggplot(), group_by(), summarise()
+
+* EXTEND Assignment
+* Extending Pascal Tafo's vignette by creating new data set from source, and performing additional analysis.
 
 # Joao D.
 
