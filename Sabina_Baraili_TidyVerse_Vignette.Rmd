@@ -151,3 +151,96 @@ This vignette demonstrates how to:
 
 - Kaggle Netflix Dataset: <https://www.kaggle.com/datasets/shivamb/netflix-shows>  
 - TidyVerse Documentation: <https://www.tidyverse.org/packages/>
+
+--- 
+
+# TidyVerse EXTEND Assignment: extended by Catherine Dube
+
+## Additional Analysis: Movie Duration and Genre Patterns
+
+In this section, I extend the original vignette by exploring how movie duration varies across genres, i.e. variable `listed_in`. Netflix titles often list multiple genres for a single movie, so I'll start by tidying the data using separate_rows(), then compute summary statistics, and finally visualize the results.
+
+```{r extend-data}
+# Clean and prepare dataset - expanded for genre
+
+duration_genre_df <- netflix_clean %>%
+  separate_rows(listed_in, sep = ", ") %>%  # expand multi-genre rows
+  filter(!is.na(duration)) %>% # keep only records with duration
+  mutate(
+    duration_min = parse_number(duration) # convert "90 min" → 90
+  )
+```
+
+## Average Movie Duration by Genre
+
+Here I'm getting the mean movie length for each genre and identifying which genres have the longest or shortest typical runtimes.
+
+```{r mean-movie-length-per-genre}
+genre_duration_summary <- duration_genre_df %>%
+  group_by(listed_in) %>%
+  summarise(
+    avg_duration = mean(duration_min, na.rm = TRUE),
+    count_movies = n()
+  ) %>%
+  filter(count_movies >= 20) %>%           # keep only genres with enough data
+  arrange(desc(avg_duration))
+
+head(genre_duration_summary)
+```
+
+## Visualization: Genres With the Longest Average Duration
+
+This bar chart highlights the top 10 genres with the longest average runtimes.
+
+```{r runtime-bar}
+genre_duration_top10 <- genre_duration_summary %>%
+slice_max(avg_duration, n = 10)
+
+ggplot(genre_duration_top10,
+aes(x = reorder(listed_in, avg_duration), y = avg_duration)) +
+geom_col(fill = "darkseagreen3") +
+coord_flip() +
+labs(
+  title = "Top 10 Genres by Average Movie Duration",
+  x = "Genre",
+  y = "Average Duration (minutes)"
+) +
+theme_minimal()
+
+```
+
+Classic movies have the longest average duration nearing 120 minutes!
+
+## Movie Duration Distribution
+
+Finally to get an idea of the variability of the runtimes, here is the distribution of movie durations.  
+
+```{r duration-distribution}
+# Using netflix_clean again here bc my dataframe above duplicates lines for movies in mult. genres
+duration_movies <- netflix_clean %>%
+  filter(!is.na(duration)) %>%
+  mutate(duration_min = parse_number(duration))
+
+ggplot(duration_movies, aes(duration_min)) +
+  geom_density(fill = "lightcoral", alpha = 0.6) +
+  labs(
+    title = "Distribution of Netflix Movie Durations",
+    x = "Runtime (minutes)",
+    y = "Density"
+  ) +
+  theme_minimal()
+
+```
+
+The average movie in the data set runs a little under 100 minutes long. 
+
+## Summary from Tidyverse EXTEND
+
+This extended analysis demonstrates additional TidyVerse skills, including:
+
+* Using separate_rows() and parse_number() to clean multi-valued fields
+* Grouping and summarizing movie durations by genre
+* Creating both bar charts and density plots using ggplot2
+* Employing tidy data principles to improve interpretability
+
+These additions introduced a new angle to the exploration on the Netflix dataset! It also revealed to us that while the average movie runtims is jsut under 100 minutes, Classic movies average just under 120 minutes, which is good to know the next time I pick a movie.
