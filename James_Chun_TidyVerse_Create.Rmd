@@ -166,6 +166,66 @@ These charts reveal which genres dominate global sales for each console. For exa
 
 ## Summary
 
+###EDIT
+#Extended the analysis by comparing publishers across both consoles.
+First combined the PS4 and Xbox One datasets into a single table, then look at the
+publishers with the highest global sales. Finally created visualizations that
+compare publisher performance by console.
+# Combine PS4 and Xbox One sales data into a single table
+
+combined_sales <- bind_rows(
+PS4_sales %>%
+select(Title, Publisher, Genre, North.America, Europe, Japan, Rest.of.World, Global) %>%
+  mutate(Console = "PS4"),
+  XboxOne_sales %>%
+# Same structure for Xbox One
+select(Title, Publisher, Genre, North.America, Europe, Japan, Rest.of.World, Global) %>%
+  mutate(Console = "Xbox One")
+)
+
+# Combined dataset
+
+head(combined_sales)
+
+#Calculate total global sales by Publisher and Console
+
+publisher_global <- combined_sales %>%
+group_by(Publisher, Console) %>%
+summarise(total_global = sum(Global, na.rm = TRUE), .groups = "drop")
+
+#Find the top publishers overall (across both consoles)
+
+top_publishers_overall <- publisher_global %>%
+group_by(Publisher) %>%
+
+
+summarise(overall_global = sum(total_global), .groups = "drop") %>%
+arrange(desc(overall_global)) %>%
+
+slice_head(n = 10)   # Top 10
+
+#Keep top publishers in the detailed table
+
+publisher_top <- publisher_global %>%
+inner_join(top_publishers_overall, by = "Publisher")
+
+# View the top publishers table
+
+publisher_top
+
+# Plot: For each of the top publishers, compare PS4 vs Xbox One
+
+ggplot(publisher_top, aes(x = reorder(Publisher, overall_global),
+  y = total_global,
+  fill = Console)) +
+  geom_col(position = "dodge") +  # Side-by-side bars
+  coord_flip() +                  # Flip for better readability
+  labs(title = "Top Publishers by Global Sales: PS4 vs Xbox One",
+    x = "Publisher",
+    y = "Total Global Sales (Units)",
+    fill = "Console"
+) +
+###EDIT
 
 In this vignette, we explored some basic data tidying and analysis using the libraries and functions:
 <br>
