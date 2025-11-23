@@ -36,9 +36,9 @@ Functions used: read_csv(), filter(), group_by(), summarise(), arrange(), slice_
 
 # Catherine Lysette D.
 
-* Initial Description and Link:
+* Initial Description and Link: Created a TidyVerse vignette analyzing 2023 U.S. wage and salary data from the BLS, focusing on gender pay comparisons and data cleaning/visualization techniques.
 
-* Revision/Addition Description and Link:
+* Revision/Addition Description and Link: Extended Sabina Baraili’s Netflix vignette by adding a movie-duration analysis with tidy cleaning, summarization, and new visualizations.
 
 # Escarlet G.
 
