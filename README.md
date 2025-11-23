@@ -66,6 +66,8 @@ This dataset provides data about nyc real estate market in the past years.
 * "Adding Jacob Shapiro stringr vignette"
 * TidyVerse Assignment CREATE JRS - stringr.Rmd
 
+* Tidyverse EXTEND assignment: "Sabina_Baraili_TidyVerse_Vignette - JS Edits.Rmd" - extended on Sabina's dplyr, tidyr, and ggplot vignette using netflix data
+
 # James C.
 
 * Initial Description and Link:
