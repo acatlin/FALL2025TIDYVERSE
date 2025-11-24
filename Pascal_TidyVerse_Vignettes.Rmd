@@ -1,0 +1,155 @@
+---
+title: "DATA 607 - TidyVerse Dog Bites Vignette"
+author: "Pascal Hermann Kouogang Tafo"
+date: "2025-10-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Introduction
+
+**In order to create a Tidyverse Vignette, I will be using the kaggle source where i will look at all dogs' bites that have been registered in New York City from 2015 to 2021.**
+
+
+## Load the required package
+
+
+```{r Loading-package}
+
+library(tidyverse)
+
+```
+
+
+## Let's read the Data from GitHub
+
+
+```{r Read-Data}
+
+NYC_Dogs_Bites <- read_csv("https://raw.githubusercontent.com/Pascaltafo2025/DATA-607/main/Dog_Bites_Data.csv")
+
+head(NYC_Dogs_Bites)
+
+colnames(NYC_Dogs_Bites)
+
+sort(unique(year(mdy(NYC_Dogs_Bites$DateOfBite))))
+```
+
+
+*Our dataset is very large because it contains the dogs bites in NYC from 2015 to 2021. I decided to conduct my analysis only in the year 2021.*
+
+
+# *Data Cleaning*
+
+*In the section, i will column(s) that i believe are not relevant for the analysis, select only the records for my year of interest.*
+
+```{r Data-Cleaning}
+
+library(lubridate)
+
+# Let's do our first clean up by selecting our year of interest and getting ride of the unnecessary columns. 
+
+NYC_Dog_Bites2021 <- NYC_Dogs_Bites %>%
+  select(-UniqueID,-Species,-ZipCode) %>% #remove UniqueID column
+  mutate(Year = year(mdy(DateOfBite))) %>%  # convert the Date format MDY to only year
+  filter(Year == 2021)  # keep only year 2021
+
+head(NYC_Dog_Bites2021,10)
+
+```
+
+
+# *DATA ANALYSIS*
+
+*My goal is to compare dogs bites incidents by breed and check if there is a correlation between the dog breed and their Sterilization status.*
+
+*1) Let's find the number of incidents by breed.*
+
+```{r count-breeds}
+  
+# Data preparation for analysis
+
+NYC_Dog_Bites2021 <- NYC_Dog_Bites2021 %>%
+  filter(Breed != "UNKNOWN")  # remove the Unknown dogs breed
+
+# Let's count the incidents by breed
+
+DogsBites_by_breed <- NYC_Dog_Bites2021 %>%
+  group_by(Breed) %>%
+  summarise(n_incidents = n()) %>%
+  arrange(desc(n_incidents))
+
+DogsBites_by_breed
+
+```
+
+*This result shows that Pit Bull is the most mentioned breed with 521 cases of dogs bites registered in New York City in 2021 followed by the Mixed, the German Shepherd breeds respectively with 112 and 85 cases. *
+
+
+*2) Let's find the relationship between the dog breed and whether or not they are spayNeuter.*
+
+```{r Breed-vs-SpayNeuter}
+
+Breed_SpayNeuter <- NYC_Dog_Bites2021 %>%
+  count(Breed, SpayNeuter) %>%
+  group_by(Breed) %>%
+  mutate(percent = 100 * n / sum(n)) %>%
+  arrange(desc(n))
+
+head(Breed_SpayNeuter,10)
+
+
+```
+
+
+
+# *DATA VISUALIZATION*
+
+
+*We will generate a plot that will show the proportion of dog bites incidents by breed depending if they are Spayed/Neutered or not. Since we have too many breeds registered, we will on the top 10 most registered breeds.*
+
+
+```{r Top10Breeds-plot}
+
+# let's get the top 10 Breeds by count
+
+top10_Breeds <- NYC_Dog_Bites2021 %>%
+                filter(!is.na(Breed), 
+                str_to_lower(Breed) != "unknown",
+                !is.na(SpayNeuter)) %>%
+                add_count(Breed, name = "breed_total") %>%
+                filter(breed_total %in% tail(sort(unique(breed_total)), 10))
+
+# Create plot
+
+ggplot(data= top10_Breeds, aes(x = fct_reorder(Breed, Breed, length), y = 1, fill = SpayNeuter)) +
+  geom_col(position = "fill") +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Spay/Neuter Status by Top 5 Dog Breeds in Bite Incidents",
+    x = "Dog Breed",
+    y = "Proportion of Incidents",
+    fill = "Spay/Neuter Status") +
+  theme_minimal()
+
+
+```
+
+# *INTERPRETATION*
+
+*Overall, the graph shows that dogs that are spayed or Neutered are less likely involved in New York City dogs bites incidents.In fact, only 2 out of the top 10 Breeds by count that are Spayed or Neutered have an incident proportion higher than 25%. * 
+
+
+
+
+
+
+

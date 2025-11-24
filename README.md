@@ -10,11 +10,17 @@ Revision/Addition Description and Link:
 * Modified ggplot/forcats example to demonstrate sorting, other category
 * ggplot_forcats.qmd
 
-# Arutam Bosco A.
+# Arutam Antunish.
 
 * Initial Description and Link:
+  
+https://www.kaggle.com/datasets/crawford/80-cereals
+
+Using nutritional data such as calories, sugar, fiber, and rating to explore cereal health profiles
 
 * Revision/Addition Description and Link:
+  
+Functions used: read_csv(), filter(), group_by(), summarise(), arrange(), slice_head(), ggplot()
 
 # Cai L.
 
@@ -24,9 +30,9 @@ Revision/Addition Description and Link:
 
 # Candace G.
 
-* Initial Description and Link:
+* Initial Description and Link:https://rpubs.com/Candace63/TidyverseVignette    My Rpubs Tidyverse Vignette
 
-* Revision/Addition Description and Link:
+* Revision/Addition Description and Link: 
 
 # Catherine Lysette D.
 
@@ -36,21 +42,29 @@ Revision/Addition Description and Link:
 
 # Escarlet G.
 
-* Initial Description and Link:
+* Initial Description and Link: [Corporate Profitability Analysis using the Tidyverse](https://github.com/egabrielvice/FALL2025TIDYVERSE/blob/main/Corporate_Profitability_Analysis.Rmd)
 
 * Revision/Addition Description and Link:
 
 # Haoming C.
 
 * Initial Description and Link:
-
+https://www.kaggle.com/datasets/nelgiriyewithana/new-york-housing-market
+This dataset provides data about nyc real estate market in the past years.
 * Revision/Addition Description and Link:
-
+* Extend assignment:
+  Data source: https://www.kaggle.com/datasets/anandshaw2001/video-game-sales
+  The analysis extends based on James Chun's video games comparison.
+  Function extended: mean(),median(), IQR(), geom_histogram(), summary()
 # Jacob S.
 
 * Initial Description and Link:
+* Showed some functions in stringr package like str_length, str_count, str_replace, and str_split via fast food data set https://www.kaggle.com/datasets/tan5577/nutritonal-fast-food-dataset
+* TidyVerse Assignment CREATE JRS - stringr.Rmd
 
 * Revision/Addition Description and Link:
+* "Adding Jacob Shapiro stringr vignette"
+* TidyVerse Assignment CREATE JRS - stringr.Rmd
 
 # James C.
 
@@ -67,15 +81,21 @@ Functions used: getURL(), mutate(), arrange(), ggplot(), group_by(), summarise()
 
 # Joao D.
 
-* Initial Description and Link:
+* **Initial Description and Link:**  
+Added a simple Tidyverse vignette demonstrating data wrangling with `dplyr` using the built-in `mpg` dataset.  
+RPubs Link: https://rpubs.com/klkid969/week9_tidyverse
 
-* Revision/Addition Description and Link:
+* **Revision/Addition Description and Link:**  
+N/A 
 
 # Kevin M.
 
 * Initial Description and Link:
+Added a simple Tidyverse vignette demonstrating data wrangling with `dplyr` using the built-in `mpg` dataset.  
+RPubs Link: https://rpubs.com/klkid969/week9_tidyverse
 
 * Revision/Addition Description and Link:
+  Added a mpg_summary to show the most fuel efficient brands.
 
 # Luis A H.
 
@@ -108,8 +128,29 @@ https://github.com/sachikapoor99-byte/FALL2025TIDYVERSE/pull/1/commits/9368829e8
 # Paula D B.
 
 * Initial Description and Link:
+  ##Dataset Overview: Recent College Graduates
 
+  **Source:** [FiveThirtyEight GitHub Repository](https://github.com/fivethirtyeight/data/blob/master/college-majors/recent-grads.csv)  
+  **Original Story:** *The Economic Guide to Picking a College Major* by FiveThirtyEight  
+  **Data Origin:** U.S. Census Bureau — American Community Survey (ACS) 2010–2012 Public Use Microdata Series (PUMS)
+
+  ##Description
+  The `recent-grads.csv` dataset provides a comprehensive snapshot of earnings and employment outcomes for recent college graduates in the United States.     It includes:
+    - **Basic earnings metrics**: Median income, income percentiles (25th and 75th), and unemployment rates
+    - **Labor force participation**: Employment status and full-time employment rates
+    - **Demographic breakdowns**: Gender distribution across majors
+    - **Job types**: Share of graduates working in STEM, service, or other fields
+
+  This dataset is ideal for exploring how college major choice impacts early career outcomes.
+
+   ##Additional Resources
+    - [ACS PUMS Data Access](http://www.census.gov/programs-surveys/acs/data/pums.html)
+    - [ACS PUMS Documentation](http://www.census.gov/programs-surveys/acs/technical-documentation/pums.html)
+  
 * Revision/Addition Description and Link:
+  ** My TidyVerse vignette explores dplyr, ggplot2, and readr packages from the TidyVerse.
+  https://github.com/PaulaB989/TVCreate/blob/main/TidyVerseCREATE.Rmd
+  Data now linked here: https://github.com/PaulaB989/TVCreate/blob/main/recent-grads.csv
 
 # Pricilla N.
 filter(), mutate(), summarize(), group_by(), select(), and ggplot() 
@@ -159,13 +200,14 @@ https://github.com/Vaene/FALL2025TIDYVERSERandyHowk/tree/main/archive
 - 
 # Taha M.
 
-* Initial Description and Link:
+* Initial Description and Link: https://www.kaggle.com/datasets/carrie1/ecommerce-data/data
 
 * Revision/Addition Description and Link:
 
 # Wendy R.
 
-* Initial Description and Link:
+* Initial Description and Link: Using tidyverse's purr package to avoid having to repeatedly write the same code. Using the map(), map_dbl() and walk2() functions we will create and save score distribution plots per subject and investigate if there is any correlation between student scores and the number of hours they spent studying on their own.
+* Kaggle Dataset: https://www.kaggle.com/datasets/mexwell/student-scores
 
 * Revision/Addition Description and Link:
 

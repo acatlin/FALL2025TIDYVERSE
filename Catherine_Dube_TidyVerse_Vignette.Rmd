@@ -1,0 +1,100 @@
+---
+title: "DATA 607 - TidyVerse Vignette"
+author: "Catherine Dube"
+output: 
+  html_document:
+    self_contained: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse, scales)
+```
+
+## Set Up
+I am using the data available at [the U.S. Bureau of Labor Statistics](https://www.bls.gov/cps/cps_aa2023.htm) to look at the 2023 earnings of full-time wage and salary workers in the U.S. I've hosted the table of data I am interested in in my personal repo.
+
+## Read in Data
+```{r read-in-data}
+df_raw <- read.csv('https://raw.githubusercontent.com/cdube89128/DATA-607/refs/heads/main/week-09/cpsa2023_table39.csv')
+head(df_raw)
+sapply(df_raw, class)
+```
+
+This data is barely readable as is, so let's take it to some substantial cleaning.
+
+## Tidy the Data
+```{r org-data}
+new_colnames <- c("metric", "total_number_workers", "median_weekly_earnings", 
+                  "men_number_workers", "men_weekly_earnings",
+                  "women_number_workers", "women_weekly_earnings")
+df <- df_raw[7:nrow(df_raw),]
+colnames(df) <- new_colnames
+
+# Remove empty rows
+df <- df %>%
+  filter(if_all(everything(), ~ . != "" & !is.na(.)))
+
+# Clean up the dashes, dollar signs, and make numeric instead of char
+df <- df %>%
+  mutate(across(
+    -metric,
+    ~ str_replace_all(., "[$,]", "") |>   # remove $ and commas
+      na_if("–") |>                       # convert en dash to NA
+      as.numeric()                        # convert to numeric
+  ))
+
+summary(df)
+```
+
+## Taking A Look at Men's and Women's Earnings
+```{r men-women-earnings-explore}
+df_gap <- df %>%
+  filter(!is.na(men_weekly_earnings), !is.na(women_weekly_earnings)) %>%  # keep only rows with data for both men +women
+  mutate(
+    pay_gap = men_weekly_earnings - women_weekly_earnings,
+    women_to_men_ratio = women_weekly_earnings / men_weekly_earnings,
+    women_percent_of_men = women_to_men_ratio * 100
+  ) %>%
+  arrange(women_to_men_ratio)
+```
+
+## Jobs Where Women Earn the Smallest Percentage of What Men Earn
+```{r big-gaps}
+df_gap %>%
+  select(metric, women_percent_of_men) %>%
+  arrange(women_percent_of_men) %>%
+  head(10)
+```
+
+## Visualizations
+```{r visual}
+df_gap_filtered <- df_gap %>%
+  filter(!is.na(women_to_men_ratio)) %>%
+  arrange(women_to_men_ratio)
+
+df_gap_topbottom <- bind_rows(
+  head(df_gap_filtered, 10),
+  tail(df_gap_filtered, 10)
+)
+
+ggplot(df_gap_topbottom, aes(x = reorder(metric, women_to_men_ratio), y = women_to_men_ratio)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Occupations with the Largest and Smallest Gender Pay Gaps",
+    x = "Occupation",
+    y = "Women's Earnings as % of Men's"
+  ) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(hjust = 1)) 
+
+```
+
+

@@ -1,0 +1,95 @@
+---
+title: "TidyVerse exercise"
+author: "Arutam Antunish"
+date: "2025-10-27"
+output: html_document
+---
+
+# Introduction
+
+This vignette demonstrates how to use key functions from the `tidyverse` package to explore a simple nutrition dataset about breakfast cereals which can be found in this link: www.kaggle.com/datasets/crawford/80-cereals. 
+
+We will filter, group, summarize, and visualize data to uncover patterns in calories, sugar, fiber, and nutritional ratings.
+
+
+## Load libraries and dataset
+
+```{r}
+
+library(tidyverse)
+library(ggplot2)
+
+# Load the dataset
+cereal <- read_csv("https://raw.githubusercontent.com/arutam-antunish/DATA607/refs/heads/main/cereal.csv")
+
+# Preview the structure
+glimpse(cereal)
+
+```
+
+## Filter cereals with fewer than 100 calories
+
+We want to identify cereals that are relatively low in calories per serving.
+
+```{r}
+cereal_low_cal <- cereal %>% 
+  filter(calories < 100)
+
+# Display the first few results
+head(cereal_low_cal)
+
+```
+
+## Average sugar content by manufacturer
+
+Group cereals by manufacturer (mfr) and calculate the average sugar content for each group.
+
+```{r}
+sugar_by_mfr <- cereal %>%
+  group_by(mfr) %>%
+  summarise(avg_sugar = mean(sugars, na.rm = TRUE)) %>%
+  arrange(desc(avg_sugar))
+
+sugar_by_mfr
+
+```
+
+## Visualize top 10 cereals by fiber content
+
+We select the 10 cereals with the highest fiber and display them using a horizontal bar chart.
+
+```{r}
+top_fiber <- cereal %>%
+  arrange(desc(fiber)) %>%
+  slice_head(n = 10)
+
+ggplot(top_fiber, aes(x = reorder(name, fiber), y = fiber)) +
+  geom_bar(stat = "identity", fill = "darkgreen") +
+  coord_flip() +
+  labs(title = "Top 10 Cereals by Fiber Content",
+       x = "Cereal",
+       y = "Grams of Fiber") +
+  theme_classic()
+
+```
+
+
+## Relationship between calories and nutritional rating
+
+We explore whether there's a correlation between calorie count and the cereal's nutritional rating.
+
+```{r}
+ggplot(cereal, aes(x = calories, y = rating)) +
+  geom_point(color = "steelblue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Calories vs. Nutritional Rating",
+       x = "Calories",
+       y = "Rating") +
+  theme_classic()
+```
+
+# Conclusion
+This example shows how to use filter(), group_by(), summarise(), and ggplot() to analyze and visualize nutritional data.
+
+We identified low-calorie cereals, compared sugar content across manufacturers, highlighted fiber-rich options, and examined how calories relate to overall ratings.
+
