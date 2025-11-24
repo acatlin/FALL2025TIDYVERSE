@@ -1,0 +1,98 @@
+---
+title: "Using TidyVerse to Explore Netflix Movies & TV Shows"
+author: "Cai Lin"
+output: html_document
+---
+
+## Introduction
+
+This vignette demonstrates how to use core TidyVerse packages such as
+`dplyr`, `ggplot2`, `tidyr`, and `stringr` to explore and visualize a
+Netflix dataset. The goal is to clean the data, answer questions, and
+visualize trends using the TidyVerse ecosystem.
+
+## Load libraries
+
+```{r setup}
+library(tidyverse)
+netflix <- read_csv("netflix_titles.csv")
+
+glimpse(netflix)
+```
+
+```{r data}
+cleaned_netflix <- netflix %>%
+filter(!is.na(release_year), !is.na(type), !is.na(country)) %>%
+separate_rows(listed_in, sep = ", ") %>%
+rename(genre = listed_in)
+
+cleaned_netflix %>%
+slice_head(n = 10)
+```
+
+## Question 1: How many movies vs TV shows are there?
+```{r question1}
+q1_counts <- cleaned_netflix %>%
+count(type) %>%
+mutate(percentage = n / sum(n) * 100)
+
+q1_counts
+```
+
+## Question 2: What are the top 10 genres?
+```{r q2}
+q2_top_genres <- cleaned_netflix %>%
+count(genre, sort = TRUE) %>%
+slice_head(n = 10)
+
+q2_top_genres
+
+
+q2_top_genres %>%
+ggplot(aes(x = reorder(genre, n), y = n)) +
+geom_col() +
+coord_flip() +
+labs(
+title = "Top 10 Netflix Genres",
+x = "Genre",
+y = "Number of Titles"
+)
+```
+
+## Question 3: How has the number of titles changed over time?
+```{r q3}
+q3_yearly <- cleaned_netflix %>%
+group_by(release_year) %>%
+summarise(total_titles = n(), .groups = "drop")
+
+q3_yearly %>%
+slice_tail(n = 10)
+
+q3_yearly %>%
+ggplot(aes(x = release_year, y = total_titles)) +
+geom_line() +
+labs(
+title = "Netflix Releases Over Time",
+x = "Year",
+y = "Number of Titles"
+)
+
+```
+
+## Conclusion
+
+This vignette used several TidyVerse functions:
+
+• dplyr → filter, count, group_by, summarise
+• tidyr → separate_rows
+• ggplot2 → visualization
+• readr → read_csv
+
+
+
+
+
+
+
+
+

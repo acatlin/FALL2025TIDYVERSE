@@ -98,3 +98,26 @@ ggplot(df_gap_topbottom, aes(x = reorder(metric, women_to_men_ratio), y = women_
 ```
 
 
+## Overall Gender Pay Gap
+```{r Gender Pay Gap}
+df_overall <- df_gap %>%
+mutate(
+total_workers = men_number_workers + women_number_workers
+) %>%
+summarise(
+total_men_workers = sum(men_number_workers, na.rm = TRUE),
+total_women_workers = sum(women_number_workers, na.rm = TRUE),
+avg_men_earnings_weighted =
+sum(men_weekly_earnings * men_number_workers, na.rm = TRUE) /
+total_men_workers,
+avg_women_earnings_weighted =
+sum(women_weekly_earnings * women_number_workers, na.rm = TRUE) /
+total_women_workers,
+women_to_men_ratio_overall =
+avg_women_earnings_weighted / avg_men_earnings_weighted,
+women_percent_of_men_overall = women_to_men_ratio_overall * 100
+)
+
+df_overall
+
+```
