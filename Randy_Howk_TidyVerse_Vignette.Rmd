@@ -1,0 +1,373 @@
+---
+title: 'TidyVerse CREATE: Exploring Selfie and ID Dataset'
+author: 'Randy Howk'
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: united
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Introduction
+
+This vignette demonstrates the use of several **TidyVerse** packages to explore and analyze the 'Selfie and ID 65,000+ Photos' dataset from Kaggle. This dataset contains photos of individuals and their identification documents for facial recognition and KYC (Know Your Customer) tasks.
+
+**Dataset Source:** [Kaggle - Selfie and ID Dataset](https://www.kaggle.com/datasets/simongraves/selfie-and-id-65000-photos)
+
+### TidyVerse Packages Demonstrated
+
+- **dplyr**: Data manipulation (filter, mutate, group_by, summarize, arrange)
+- **ggplot2**: Data visualization
+- **tidyr**: Data reshaping and tidying
+- **stringr**: String manipulation
+- **forcats**: Factor handling
+
+---
+
+## Loading Libraries and Data
+
+```{r load-libraries}
+# Load TidyVerse packages
+library(tidyverse)  # Loads dplyr, ggplot2, tidyr, readr, stringr, forcats, etc.
+
+
+```
+
+## Loading the Dataset
+
+```{r load-data}
+# Load the dataset (NOTE: This CSV uses semicolons as delimiter!)
+selfie_data_raw <- read_csv2("archive/Selie_ID.csv")  # read_csv2 handles semicolon-delimited files
+
+# Clean column names (fix columns starting with numbers)
+selfie_data <- selfie_data_raw %>%
+  rename(
+    id_photo_1_resolution = `1_id_photo_resolution`,
+    id_photo_2_resolution = `2_id_photo_resolution`
+  )
+
+# Display first few rows
+head(selfie_data)
+
+# Check structure and column names
+glimpse(selfie_data)
+```
+---
+
+## Data Exploration with dplyr
+
+### 1. Basic Filtering and Selection
+
+```{r dplyr-filter}
+# Filter for participants aged 25-35 from Asian ethnicity
+young_asian <- selfie_data %>%
+  filter(age >= 25 & age <= 35, ethnicity == 'Asian') %>%
+  select(set_id, age, gender, country, device_model)
+
+cat('Young Asian participants (25-35 years):\n')
+head(young_asian, 10)
+```
+
+### 2. Creating New Variables with mutate()
+
+```{r dplyr-mutate}
+# Add calculated columns
+selfie_enhanced <- selfie_data %>%
+  mutate(
+    # Calculate age verification accuracy
+    age_diff_1 = abs(age - age_printed_1),
+    age_diff_2 = abs(age - age_printed_2),
+    
+    # Categorize age groups
+    age_group = case_when(
+      age < 25 ~ '18-24',
+      age < 35 ~ '25-34',
+      age < 45 ~ '35-44',
+      age < 55 ~ '45-54',
+      TRUE ~ '55+'
+    ),
+    
+    # Extract device brand using stringr
+    device_brand = str_extract(device_model, '^[A-Za-z]+'),
+    
+    # Calculate average age discrepancy
+    avg_age_diff = (age_diff_1 + age_diff_2) / 2
+  )
+
+head(selfie_enhanced %>% select(set_id, age, age_group, device_brand, avg_age_diff))
+```
+
+### 3. Grouping and Summarizing Data
+
+```{r dplyr-group-summarize}
+# Analyze data by ethnicity and gender
+demographic_summary <- selfie_enhanced %>%
+  group_by(ethnicity, gender) %>%
+  summarize(
+    count = n(),
+    avg_age = mean(age, na.rm = TRUE),
+    avg_age_discrepancy = mean(avg_age_diff, na.rm = TRUE),
+    min_age = min(age),
+    max_age = max(age),
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(count))
+
+print(demographic_summary)
+```
+
+### 4. Top Countries by Participant Count
+
+```{r dplyr-top-countries}
+# Using count() and arrange() for ranking
+top_countries <- selfie_data %>%
+  count(country, name = 'participants') %>%
+  arrange(desc(participants)) %>%
+  head(10)
+
+print(top_countries)
+```
+
+---
+
+## Data Visualization with ggplot2
+
+### 1. Age Distribution by Gender
+
+```{r ggplot-age-dist, fig.width=10, fig.height=6}
+ggplot(selfie_enhanced, aes(x = age, fill = gender)) +
+  geom_histogram(binwidth = 5, alpha = 0.7, position = 'identity') +
+  labs(
+    title = 'Age Distribution by Gender',
+    subtitle = 'Selfie and ID Dataset',
+    x = 'Age (years)',
+    y = 'Count',
+    fill = 'Gender'
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = 'Set1')
+```
+
+### 2. Ethnicity Distribution
+
+```{r ggplot-ethnicity, fig.width=10, fig.height=6}
+ethnicity_counts <- selfie_data %>%
+  count(ethnicity) %>%
+  mutate(ethnicity = fct_reorder(ethnicity, n))
+
+ggplot(ethnicity_counts, aes(x = ethnicity, y = n, fill = ethnicity)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = 'Participant Distribution by Ethnicity',
+    x = 'Ethnicity',
+    y = 'Number of Participants'
+  ) +
+  theme_minimal() +
+  theme(legend.position = 'none') +
+  scale_fill_viridis_d()
+```
+
+### 3. Age Verification Accuracy
+
+```{r ggplot-accuracy, fig.width=10, fig.height=6}
+ggplot(selfie_enhanced, aes(x = avg_age_diff)) +
+  geom_histogram(binwidth = 0.5, fill = 'steelblue', alpha = 0.8) +
+  geom_vline(aes(xintercept = mean(avg_age_diff)),
+             color = 'red', linetype = 'dashed', size = 1) +
+  labs(
+    title = 'Distribution of Age Verification Discrepancies',
+    subtitle = 'Red line indicates mean discrepancy',
+    x = 'Average Age Difference (years)',
+    y = 'Count'
+  ) +
+  theme_minimal()
+```
+
+### 4. Device Brand Usage by Gender
+
+```{r ggplot-devices, fig.width=10, fig.height=6}
+device_gender <- selfie_enhanced %>%
+  count(device_brand, gender) %>%
+  filter(!is.na(device_brand))
+
+ggplot(device_gender, aes(x = fct_reorder(device_brand, n), y = n, fill = gender)) +
+  geom_col(position = 'dodge') +
+  coord_flip() +
+  labs(
+    title = 'Device Brand Usage by Gender',
+    x = 'Device Brand',
+    y = 'Count',
+    fill = 'Gender'
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = 'Set2')
+```
+
+---
+
+## Data Reshaping with tidyr
+
+### Pivoting Data for Analysis
+
+```{r tidyr-pivot}
+# Reshape age data to compare printed ages
+age_comparison <- selfie_data %>%
+  select(set_id, age, age_printed_1, age_printed_2, ethnicity) %>%
+  pivot_longer(
+    cols = starts_with('age_printed'),
+    names_to = 'document',
+    values_to = 'printed_age'
+  ) %>%
+  mutate(
+    document = str_replace(document, 'age_printed_', 'Document '),
+    age_difference = abs(age - printed_age)
+  )
+
+head(age_comparison, 10)
+```
+
+### Visualizing Pivoted Data
+
+```{r tidyr-viz, fig.width=10, fig.height=6}
+age_diff_summary <- age_comparison %>%
+  group_by(ethnicity, document) %>%
+  summarize(avg_diff = mean(age_difference, na.rm = TRUE), .groups = 'drop')
+
+ggplot(age_diff_summary, aes(x = ethnicity, y = avg_diff, fill = document)) +
+  geom_col(position = 'dodge') +
+  coord_flip() +
+  labs(
+    title = 'Average Age Discrepancy by Ethnicity and Document',
+    x = 'Ethnicity',
+    y = 'Average Age Difference (years)',
+    fill = 'Document'
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = 'Pastel1')
+```
+
+---
+
+## Advanced Analysis: Combining Multiple TidyVerse Functions
+
+### Complex Pipeline Example
+
+```{r complex-pipeline}
+# Comprehensive analysis combining multiple operations
+comprehensive_analysis <- selfie_enhanced %>%
+  # Filter for quality data
+  filter(!is.na(ethnicity), !is.na(device_brand)) %>%
+  
+  # Group by multiple variables
+  group_by(age_group, ethnicity, gender) %>%
+  
+  # Calculate multiple statistics
+  summarize(
+    n_participants = n(),
+    avg_age = round(mean(age), 1),
+    avg_discrepancy = round(mean(avg_age_diff), 2),
+    most_common_device = names(sort(table(device_brand), decreasing = TRUE))[1],
+    .groups = 'drop'
+  ) %>%
+  
+  # Filter for groups with sufficient sample size
+  filter(n_participants >= 2) %>%
+  
+  # Arrange by multiple columns
+  arrange(age_group, desc(n_participants))
+
+print(comprehensive_analysis)
+```
+
+### Faceted Visualization
+
+```{r faceted-viz, fig.width=12, fig.height=8}
+ggplot(selfie_enhanced, aes(x = age, fill = gender)) +
+  geom_histogram(binwidth = 5, alpha = 0.7) +
+  facet_wrap(~ethnicity, ncol = 3) +
+  labs(
+    title = 'Age Distribution by Ethnicity and Gender',
+    x = 'Age (years)',
+    y = 'Count',
+    fill = 'Gender'
+  ) +
+  theme_minimal() +
+  theme(strip.text = element_text(face = 'bold')) +
+  scale_fill_brewer(palette = 'Set1')
+```
+
+---
+
+## Key Insights
+
+### Summary Statistics
+
+```{r summary-stats}
+# Overall summary
+summary_stats <- selfie_enhanced %>%
+  summarize(
+    total_participants = n(),
+    avg_age = round(mean(age), 1),
+    age_range = paste(min(age), '-', max(age)),
+    unique_countries = n_distinct(country),
+    unique_devices = n_distinct(device_brand),
+    avg_verification_error = round(mean(avg_age_diff), 2)
+  )
+
+cat('Dataset Summary:\n')
+print(summary_stats)
+```
+
+---
+
+## Conclusion
+
+This vignette demonstrated several key **TidyVerse** capabilities:
+
+1. **dplyr**: Filtering, selecting, mutating, grouping, and summarizing data
+2. **ggplot2**: Creating various visualizations (histograms, bar charts, faceted plots)
+3. **tidyr**: Reshaping data with pivot_longer for comparative analysis
+4. **stringr**: Extracting and manipulating string data
+5. **forcats**: Reordering factors for better visualizations
+
+### TidyVerse Functions Used:
+
+- `filter()` - Subset rows based on conditions
+- `select()` - Choose specific columns
+- `mutate()` - Create new variables
+- `group_by()` - Group data for aggregation
+- `summarize()` - Calculate summary statistics
+- `arrange()` - Sort data
+- `count()` - Count observations
+- `pivot_longer()` - Reshape data from wide to long format
+- `ggplot()` - Create visualizations
+- `str_extract()` - Extract patterns from strings
+- `fct_reorder()` - Reorder factors by another variable
+
+### Next Steps
+
+To use this vignette with the actual dataset:
+
+1. Download the dataset from Kaggle
+2. Replace the sample data creation with: `selfie_data <- read_csv('Selie_ID.csv')`
+3. Adjust column names if necessary to match the actual dataset
+4. Extend the analysis based on your research questions
+
+---
+
+## References
+
+- Dataset: [Selfie and ID 65,000+ photos on Kaggle](https://www.kaggle.com/datasets/simongraves/selfie-and-id-65000-photos)
+- TidyVerse: [https://www.tidyverse.org/](https://www.tidyverse.org/)
+- R for Data Science: [https://r4ds.had.co.nz/](https://r4ds.had.co.nz/)
+
+```{r session-info}
+sessionInfo()
+```
