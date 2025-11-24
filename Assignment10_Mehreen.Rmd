@@ -180,3 +180,267 @@ In this vignette, we used dplyr's powerful verbs to:
   * arrange() and count() to quickly understand distributions and rankings. <br>
   
 The result is a clear, actionable understanding of the NYC real estate market from a raw, complex dataframe, demonstrating how tidyverse is an indispensable tool for data analysis.
+_________________________________________________________________________
+## Extension: Advanced Analysis, Visualizations, and Modeling
+### By: Taha Malik 
+
+Below is an extended analysis section you can paste directly after the original vignette. It includes (1) data quality checks, (2) outlier handling, (3) additional visualizations (violin/box, scatter with smoothing, top types), and (4) a simple regression model with diagnostics and interpretation. Each code chunk is annotated and designed to run with the `properties_clean` object created above.
+
+```{r extension-setup, message=FALSE, warning=FALSE}
+# Load packages used in this extended section.
+# If you don't have a package installed, uncomment the install.packages() line.
+# install.packages(c("broom", "scales", "janitor", "car", "plotly", "patchwork"))
+library(tidyverse)
+library(broom)
+library(scales)
+library(janitor)
+library(car)       # for vif()
+library(plotly)    # optional interactive plots
+library(knitr)
+library(kableExtra)
+```
+
+### Data quality and sanity checks
+
+```{r ext-data-quality}
+# Quick check of missingness and basic ranges for key variables.
+qa <- properties_clean %>%
+  summarise(
+    n_rows = n(),
+    n_missing_PRICE = sum(is.na(PRICE)),
+    n_missing_PROPERTYSQFT = sum(is.na(PROPERTYSQFT)),
+    min_price = min(PRICE, na.rm = TRUE),
+    max_price = max(PRICE, na.rm = TRUE),
+    min_sqft = min(PROPERTYSQFT, na.rm = TRUE),
+    max_sqft = max(PROPERTYSQFT, na.rm = TRUE)
+  )
+
+kable(qa) %>% kable_styling(full_width = FALSE)
+
+# Distribution percentiles for PRICE_SQFT to guide outlier handling
+psf_pct <- properties_clean %>%
+  summarise(
+    p1 = quantile(PRICE_SQFT, 0.01, na.rm = TRUE),
+    p5 = quantile(PRICE_SQFT, 0.05, na.rm = TRUE),
+    p25 = quantile(PRICE_SQFT, 0.25, na.rm = TRUE),
+    p50 = quantile(PRICE_SQFT, 0.50, na.rm = TRUE),
+    p75 = quantile(PRICE_SQFT, 0.75, na.rm = TRUE),
+    p95 = quantile(PRICE_SQFT, 0.95, na.rm = TRUE),
+    p99 = quantile(PRICE_SQFT, 0.99, na.rm = TRUE)
+  )
+
+kable(psf_pct) %>% kable_styling(full_width = FALSE)
+```
+
+Explanation: we check missingness and quantiles for PRICE_SQFT to decide reasonable caps/trimming for visualizations and modeling.
+
+### Outlier handling (winsorize PRICE_SQFT to 1st/99th percentiles)
+
+```{r ext-winsorize}
+# Step 1: Create PRICE_SQFT
+properties_clean <- properties_clean %>%
+  mutate(
+    PRICE_SQFT = PRICE / PROPERTYSQFT
+  )
+
+# Step 2: Compute clipping bounds
+psf_bounds <- properties_clean %>%
+  summarise(
+    lower = quantile(PRICE_SQFT, 0.01, na.rm = TRUE),
+    upper = quantile(PRICE_SQFT, 0.99, na.rm = TRUE)
+  )
+
+lower_bound <- psf_bounds$lower
+upper_bound <- psf_bounds$upper
+
+# Step 3: Create extended dataset with clipped variable
+properties_ext <- properties_clean %>%
+  filter(
+    !is.na(PRICE), 
+    !is.na(PROPERTYSQFT),
+    PROPERTYSQFT > 0, 
+    PRICE > 0
+  ) %>%
+  mutate(
+    PRICE_SQFT_clipped = pmin(pmax(PRICE_SQFT, lower_bound), upper_bound),
+    BEDS_f = factor(BEDS),
+    TYPE_f = factor(TYPE),
+    BOROUGH_f = factor(BOROUGH)
+  )
+
+# Step 4: Re-check
+properties_ext %>%
+  summarise(
+    min_clipped = min(PRICE_SQFT_clipped, na.rm = TRUE),
+    max_clipped = max(PRICE_SQFT_clipped, na.rm = TRUE),
+    n = n()
+  )
+
+```
+
+Notes: clipping (winsorizing) retains all rows but reduces extreme influence. We also create factor versions of BEDS, TYPE, BOROUGH for plotting and modeling.
+
+### Visualization 1 — Price per sqft by borough (violin + boxplot)
+
+```{r ext-violin-psf, fig.width=8, fig.height=5}
+ggplot(properties_ext, aes(x = BOROUGH_f, y = PRICE_SQFT_clipped)) +
+  geom_violin(fill = "#BFD3E6", color = NA, alpha = 0.8) +
+  geom_boxplot(width = 0.12, outlier.shape = NA, alpha = 0.9) +
+  stat_summary(fun = "median", geom = "point", shape = 23, size = 2, fill = "white") +
+  scale_y_continuous(labels = dollar_format(prefix = "$"), limits = c(lower_bound, upper_bound)) +
+  labs(
+    title = "Distribution of Price per Square Foot (clipped 1st–99th pct) by Borough",
+    x = "Borough",
+    y = "Price per SqFt (clipped)"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+Interpretation guidance: This plot helps compare the central tendency and spread of price per square foot across boroughs while limiting extreme noise.
+
+### Visualization 2 — Price vs. SqFt scatter (colored by beds), faceted by borough
+
+```{r ext-scatter, fig.width=10, fig.height=6}
+# Use log scale for price to better visualize wide value ranges
+ggplot(properties_ext, aes(x = PROPERTYSQFT, y = PRICE, color = BEDS_f)) +
+  geom_point(alpha = 0.6, size = 1.8) +
+  geom_smooth(aes(group = 1), method = "loess", color = "black", se = TRUE, linetype = "dashed") +
+  scale_y_log10(labels = dollar_format(prefix = "$")) +
+  scale_x_continuous(labels = comma_format()) +
+  facet_wrap(~ BOROUGH_f, scales = "free_x") +
+  labs(
+    title = "Price vs. Property Size (log price) by Borough",
+    subtitle = "Points colored by number of bedrooms; a LOESS trend is shown per facet",
+    x = "Property Square Footage",
+    y = "Price (log scale)",
+    color = "Beds"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+Notes: log-transforming price allows better view when prices vary by orders of magnitude. Facets let us see borough-specific trends.
+
+### Visualization 3 — Top property TYPES by average price per sqft
+
+```{r ext-type-bar, fig.width=8, fig.height=5}
+top_types <- properties_ext %>%
+  group_by(TYPE_f) %>%
+  summarise(
+    avg_psf = mean(PRICE_SQFT_clipped, na.rm = TRUE),
+    n_listings = n()
+  ) %>%
+  arrange(desc(avg_psf)) %>%
+  slice_head(n = 10)
+
+ggplot(top_types, aes(x = reorder(TYPE_f, avg_psf), y = avg_psf, fill = n_listings)) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(labels = dollar_format(prefix = "$")) +
+  scale_fill_viridis_c(option = "plasma") +
+  labs(
+    title = "Top 10 Property Types by Average Price per SqFt (clipped)",
+    x = "Property Type",
+    y = "Average Price per SqFt",
+    fill = "Number of listings"
+  ) +
+  theme_minimal(base_size = 11)
+```
+
+Interpretation: This reveals which property types command higher price per square foot and whether those types have many or few listings.
+
+### Modeling: Predicting log(PRICE) with log(SQFT), BEDS, TYPE, BOROUGH
+
+Rationale: Price is skewed; modeling log(PRICE) stabilizes variance. We include log(PROPERTYSQFT) and BEDS as predictors and categorical controls for TYPE and BOROUGH.
+
+```{r ext-model-prepare}
+# prepare model data: remove rows with missing factors that will break model
+model_data <- properties_ext %>%
+  filter(!is.na(TYPE_f), !is.na(BOROUGH_f), !is.na(BEDS_f)) %>%
+  mutate(
+    log_price = log(PRICE),
+    log_sqft = log(PROPERTYSQFT),
+    # relevel to a clear reference category for interpretation
+    BOROUGH_f = relevel(BOROUGH_f, ref = "Manhattan"),
+    TYPE_f = fct_lump_n(TYPE_f, n = 8) # lump rare types into "Other" for stable estimates
+  )
+
+glimpse(model_data)
+```
+
+```{r ext-fit-model}
+# Fit a linear model on the log scale
+fit <- lm(log_price ~ log_sqft + BEDS + TYPE_f + BOROUGH_f, data = model_data)
+
+# Tidy coefficients and exponentiate for multiplicative interpretation
+tidy_fit <- broom::tidy(fit, conf.int = TRUE)
+glance_fit <- broom::glance(fit)
+
+# Show coefficient table with interpretation help
+coef_table <- tidy_fit %>%
+  mutate(
+    exp_est = exp(estimate),                         # multiplicative effect on PRICE
+    pct_change_approx = (exp(estimate) - 1) * 100    # approximate % change
+  )
+
+kable(coef_table, digits = 4) %>% kable_styling(full_width = FALSE)
+
+# Model summary metrics
+kable(glance_fit) %>% kable_styling(full_width = FALSE)
+```
+
+Interpretation tips:
+- The log_sqft coefficient indicates elasticity: e.g., a value of 0.8 means a 1% larger property is associated with ~0.8% higher price, holding other things constant.
+- For categorical predictors, exp(coef) gives the multiplicative factor relative to the reference group.
+
+### Model diagnostics
+
+```{r ext-diagnostics, fig.width=8, fig.height=6}
+# Residuals vs fitted
+resid_df <- augment(fit, data = model_data)
+
+p1 <- ggplot(resid_df, aes(.fitted, .resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(x = "Fitted values", y = "Residuals", title = "Residuals vs Fitted") +
+  theme_minimal()
+
+# QQ plot of standardized residuals
+p2 <- ggplot(resid_df, aes(sample = .std.resid)) +
+  stat_qq(alpha = 0.5) +
+  stat_qq_line(color = "red") +
+  labs(title = "Normal Q-Q (standardized residuals)") +
+  theme_minimal()
+
+# Combine plots (patchwork if available; fallback to gridExtra)
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  p1 + p2
+} else {
+  library(gridExtra)
+  grid.arrange(p1, p2, ncol = 2)
+}
+```
+
+Check multicollinearity:
+
+```{r ext-vif}
+# VIF for numeric predictors
+vif_vals <- car::vif(fit)
+vif_vals %>% as.data.frame() %>% rownames_to_column("variable") %>%
+  rename(vif = 2) %>%
+  kable(digits = 3) %>% kable_styling(full_width = FALSE)
+```
+
+Guidance:
+- Look for patterns in Residuals vs Fitted (non-random patterns suggest model misspecification).
+- QQ plot: heavy tails or deviations indicate residual non-normality — acceptable if sample is large, but check influential points.
+- VIF > 5–10 suggests collinearity concerns.
+
+### Quick interpretive summary (to paste into the report)
+
+This extension performed more robust exploratory analysis and a simple regression:
+
+- We clipped price-per-square-foot at the 1st and 99th percentile prior to plotting to focus the visualizations on the central distribution without removing rows.
+- Violin + boxplots show relative dispersion by borough: (you can paste your observed result here, e.g., "Manhattan has the highest median PPSF and the largest spread").
+- The Price vs SqFt scatter (log price) indicates a positive relationship between size and price, but with substantial dispersion explained by number of bedrooms, property TYPE, and BOROUGH.
+- The fitted log-linear model quantifies elasticity: the coefficient on log_sqft indicates the percent change in price associated with a 1% change in size, controlling for other factors.
+- Diagnostics (residuals and QQ) should be reviewed — if strong non-linearity or heteroskedasticity remains, consider adding interaction terms (e.g., log_sqft:BOROUGH) or using robust standard errors
