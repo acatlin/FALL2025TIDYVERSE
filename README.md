@@ -124,6 +124,32 @@ https://github.com/sachikapoor99-byte/FALL2025TIDYVERSE/pull/1/commits/9368829e8
 * Initial Description and Link:
 
 * Revision/Addition Description and Link:
+**TidyVerseEXTEND - Paula Brown**
+**The revisions to this file explores dog bite incidents in New York City between 2015 and 2021, focusing on breed-specific trends.**
+
+**The analysis includes:**
+
+# Bar Chart: Top 10 Breeds by Incident Count (2015 vs 2021) Compares the number of bite incidents for the most common breeds in both years.
+
+- Pit Bull incidents declined sharply (521 → 64).
+
+- Small breeds such as Chihuahua, Shih Tzu, Yorkshire Terrier, and Maltese showed notable increases.
+
+- German Shepherd remained relatively stable across both years.
+
+# Bar Chart: Top 10 Breeds by Percent Increase (2015–2021) Highlights breeds with the largest relative growth in bite incidents.
+
+- Mixed breeds and Pitbull Mixes showed explosive growth (up to 3700%).
+
+- Designer and small breeds (Golden Doodle, Corgi, Dachshund, Poodle Mix) also saw significant increases.
+
+- Many of these percent changes reflect low base counts in 2015.
+
+# Table: Percent Change by Breed Provides a numeric view of incident counts in 2015 and 2021, the difference, and percent change.
+
+- Useful for identifying breeds with the largest increases or decreases.
+
+- Reinforces the shift from large breeds dominating bite incidents in 2015 to smaller and mixed breeds rising in 2021.
 
 # Paula D B.
 
