@@ -119,6 +119,12 @@ Dataset link: https://raw.githubusercontent.com/mehreengillani/DATA607/refs/head
 * Beverage Preference Analysis: Identifies which drink dominates each country's alcohol consumption and finds countries where one beverage type makes up over 70% of total servings.
 Faceted Visualization: Provides a clearer comparison by showing the top countries for each beverage type separately, revealing different geographic patterns for beer, spirits, and wine consumption.
 https://github.com/sachikapoor99-byte/FALL2025TIDYVERSE/pull/1/commits/9368829e876990c13b556f270ab8cc9a8cb50dcd
+**Taha**
+* Outlier handling (winsorize PRICE_SQFT to 1st/99th percentiles) — DATA607_ASSIGNMENT10_extension.Rmd (chunk: ext-winsorize)
+* Visualization: Violin + boxplot of Price per SqFt by borough — DATA607_ASSIGNMENT10_extension.Rmd (chunk: ext-violin-psf)
+* Visualization: Price vs. SqFt scatter (log price), colored by beds & faceted by borough — DATA607_ASSIGNMENT10_extension.Rmd (chunk: ext-scatter)
+* Visualization: Top 10 property TYPES by average price per SqFt — DATA607_ASSIGNMENT10_extension.Rmd (chunk: ext-type-bar)
+* Modeling: Log-linear regression (log(PRICE) ~ log(SQFT) + BEDS + TYPE + BOROUGH) with tidy coefficients 
 # Pascal Hermann K.
 
 * Initial Description and Link:
