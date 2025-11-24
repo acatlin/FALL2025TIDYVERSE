@@ -24,7 +24,19 @@ Functions used: read_csv(), filter(), group_by(), summarise(), arrange(), slice_
 
 # Cai L.
 
-* Initial Description and Link:
+* Initial Description and Link: 
+
+https://rpubs.com/cailin0121/1372227
+
+My vignette demonstrates how to use **dplyr, ggplot2, and tidyr**
+on a Netflix dataset to analyze:
+
+• Movie vs TV show distribution  
+• Top 10 genres  
+• Release trends over time  
+
+File: `cailin_vignette.Rmd`
+
 
 * Revision/Addition Description and Link:
 
