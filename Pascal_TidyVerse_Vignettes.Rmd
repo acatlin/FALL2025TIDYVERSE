@@ -143,9 +143,195 @@ ggplot(data= top10_Breeds, aes(x = fct_reorder(Breed, Breed, length), y = 1, fil
 
 ```
 
+# Compare 2021 dog bite data to 2015 dog bite data
+Comparing 2015 data to 2021 data provided.
+I will filter to retrieve 2015 NYC dog bites.
+TidyVerseEXTEND - Paula Brown
+```{r get_2015_data}
+NYC_Dog_Bites2015 <- NYC_Dogs_Bites %>%
+  select(-UniqueID,-Species,-ZipCode) %>%
+  mutate(Year = year(mdy(DateOfBite))) %>%
+  filter(Year == 2015, Breed != "UNKNOWN")
+```
+
+## Get Top10 Breeds 
+We retrieve top 10 breeds for 2015 and 2021 dog bites to combine them
+TidyVerseEXTEND - Paula Brown
+```{r count_bites_by_breed}
+top10_2015 <- NYC_Dog_Bites2015 %>%
+  count(Breed, name = "Incidents_2015") %>%
+  arrange(desc(Incidents_2015)) %>%
+  slice_max(Incidents_2015, n = 10)
+
+top10_2021 <- NYC_Dog_Bites2021 %>%
+  count(Breed, name = "Incidents_2021") %>%
+  arrange(desc(Incidents_2021)) %>%
+  slice_max(Incidents_2021, n = 10)
+```
+
+## Merge the datasets
+Combine the data
+TidyVerseEXTEND - Paula Brown
+```{r merge_data}
+top_breeds_combined <- full_join(top10_2015, top10_2021, by = "Breed") %>%
+  pivot_longer(cols = starts_with("Incidents"),
+               names_to = "Year",
+               values_to = "Incidents") %>%
+  mutate(Year = ifelse(Year == "Incidents_2015", "2015", "2021"))
+
+```
+
+Remove NAs and only choose data with incidents
+TidyVerseEXTEND - Paula Brown
+```{r clean_top_breeds}
+top_breeds_combined_clean <- top_breeds_combined %>%
+  filter(!is.na(Breed), !is.na(Incidents), Incidents > 0)
+```
+
+## Visualize the difference
+Here's a bar chart comparing 2015 and 2021 counts side by side
+TidyVerseEXTEND - Paula Brown
+```{r bar_visuals}
+ggplot(top_breeds_combined_clean, aes(x = fct_reorder(Breed, Incidents, sum), 
+                                y = Incidents, fill = Year)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Dog Breeds in Bite Incidents: 2015 vs 2021",
+    x = "Dog Breed",
+    y = "Number of Incidents",
+    fill = "Year"
+  ) +
+  geom_text(aes(label = Incidents), position = position_dodge(width = 0.9), hjust = -0.1)+
+  theme_minimal()
+```
+###Interpretation of Top 10 Breeds in 2015 to Top 10 Breeds in 2021
+New interpretation made by Paula Brown for TidyVerseEXTEND project
+
+**Significant Decrease**
+
+- Pit Bull: Dropped dramatically from 521 incidents in 2015 to just 64 in 2021.
+
+This is a nearly 88% decrease, which could reflect changes in ownership, breed classification, public policy, or reporting practices.
+
+**Notable Increases**
+
+- Chihuahua: Rose from 56 to 133 incidents — a 138% increase.
+
+- Shih Tzu: Jumped from 58 to 120 incidents, more than doubling.
+
+- Yorkshire Terrier and Maltese also saw substantial increases, suggesting a rise in small breed incidents.
+
+**Relatively Stable**
+
+- German Shepherd: Stayed nearly constant (85 → 87).
+
+This stability might indicate consistent breed presence and behavior over time.
+
+## Count Incidents by Breed
+```{r}
+DogsBites_by_breed2015 <- NYC_Dog_Bites2015 %>%
+  count(Breed, name = "n_incidents_2015")
+
+DogsBites_by_breed2021 <- NYC_Dog_Bites2021 %>%
+  count(Breed, name = "n_incidents_2021")
+```
+
+## Compare Breed
+```{r create_breed_compare}
+Breed_comparison <- full_join(DogsBites_by_breed2015, DogsBites_by_breed2021, by = "Breed") %>%
+  replace_na(list(n_incidents_2015 = 0, n_incidents_2021 = 0)) %>%
+  mutate(
+    diff = n_incidents_2021 - n_incidents_2015,
+    percent_change = ifelse(n_incidents_2015 == 0, NA, (diff / n_incidents_2015) * 100)
+  )
+```
+## Highlight Percent Differences
+Here's a quick table view of the top breeds with biggest increases/decreases
+TidyVerseEXTEND - Paula Brown
+```{r percent_diff}
+Breed_comparison %>%
+  select(Breed, n_incidents_2015, n_incidents_2021, diff, percent_change) %>%
+  filter(!is.na(percent_change)) %>%
+  mutate(percent_change = paste0(round(percent_change, 1), "%")) %>%
+  arrange(desc(percent_change))
+head(10)
+```
+## Top 10 Breeds with Largest Percent Increase
+Top 10 breeds with the largest percent increases in bite incidents from 2015 to 2021
+TidyVerseEXTEND - Paula Brown
+```{r top_10_largest_increases}
+# Example: using your Breed_comparison table
+top_increases <- Breed_comparison %>%
+  filter(!is.na(percent_change)) %>%                # remove NA values
+  arrange(desc(percent_change)) %>%
+  slice_head(n = 10) %>%                            # top 10 increases
+  mutate(percent_label = paste0(round(percent_change, 1), "%"))
+
+# Plot
+ggplot(top_increases, aes(x = fct_reorder(Breed, percent_change),
+                          y = percent_change)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = percent_label),
+            hjust = -0.1, size = 3.5) +
+  coord_flip() +
+  labs(
+    title = "Top 10 Dog Breeds by Increase in Bite Incidents (2015–2021)",
+    x = "Dog Breed",
+    y = "Percent Change"
+  ) +
+  theme_minimal()
+```
+###Interpretation of Top Dog Breeds by Increase in Bite Incidents (2015-2021)
+Huge Growth in incidents
+New interpretation made by Paula Brown for TidyVerseEXTEND project
+
+- Mixed Breed: A staggering 3700% increase — from 1 incident in 2015 to 38 in 2021.
+
+- Mixed: Jumped 1500%, suggesting a major rise in bites from dogs labeled as mixed breed.
+
+- Pitbull Mix: Up 1100%, reinforcing the trend seen in mixed classifications.
+
+These massive jumps likely reflect:
+
+- Increased ownership of mixed breeds
+
+- Changes in breed classification or reporting
+
+- Possibly greater public awareness or documentation of incidents
+
+**Moderate but Significant Increases**
+
+- Golden Doodle and Husky Mix: Both rose 400%, from 1 to 5 incidents.
+
+- Dachshund, Poodle X, Poodle Mix, Sheperd, and Corgi: All saw increases between 233% and 300%.
+
+
+
 # *INTERPRETATION*
 
 *Overall, the graph shows that dogs that are spayed or Neutered are less likely involved in New York City dogs bites incidents.In fact, only 2 out of the top 10 Breeds by count that are Spayed or Neutered have an incident proportion higher than 25%. * 
+
+# Overall Conclusion
+New Conclusion made by Paula Brown for TidyVerseEXTEND project
+
+Between 2015 and 2021, dog bite incidents in NYC shifted significantly in both breed composition and incident frequency:
+
+**Large Breeds Declined**
+
+- Pit Bull bites dropped dramatically (from 521 to 64), suggesting either reduced ownership, improved management, or changes in breed classification.
+
+- Other traditionally high-incident breeds like German Shepherd and Rottweiler remained stable or declined.
+
+**Small and Mixed Breeds Surged**
+
+- Breeds like Chihuahua, Shih Tzu, Yorkshire Terrier, and Maltese saw sharp increases in raw incident counts.
+
+- Percent change analysis revealed explosive growth in Mixed, Pitbull Mix, Golden Doodle, and Corgi bites — some increasing over 1000%.
+
+
+
+
 
 
 
