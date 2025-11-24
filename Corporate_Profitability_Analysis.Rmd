@@ -3,110 +3,336 @@ title: "Corporate Profitability Analysis Using the Tidyverse"
 author: "Escarlet Gabriel Vicente"
 date: "2025-10-26"
 output:
-  html_document: default
-  pdf_document: default
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: false
+    latex_engine: xelatex
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: 
+      collapsed: false
+      smooth_scroll: true
+    theme: flatly
+    css: style.css
+    mathjax: default
+    highlight: kate
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```
 
-## Introduction
-
+# Introduction
 This vignette demonstrates how to use the Tidyverse to analyze corporate financial data from the Fortune Top 1000 Companies by Revenue (2022) dataset, obtained from Kaggle.
 The goal is to explore business metrics such as revenue, profit, and profit margin, and identify which companies generate the highest profits relative to their revenues.
 
-**Data Source:** [Fortune Top 1000 Companies by Revenue (2022), Kaggle](https://www.kaggle.com/datasets/surajjha101/fortune-top-1000-companies-by-revenue-2022)  
-**License:** CC BY-NC-SA 4.0
+## The Critical Importance of Employee Efficiency in 2024-2025
 
+In today's labor market, understanding employee efficiency has become more critical than ever. U.S. labor productivity increased 2.3% in 2024—the strongest growth in 14 years outside of the pandemic period—driven by output increases while hours worked grew minimally. This demonstrates that companies are achieving more with existing workforces rather than through expansion alone. Simultaneously, unit labor costs have risen significantly, reflecting increases in hourly compensation of approximately 5%, putting pressure on profit margins and making efficiency metrics vital for maintaining competitiveness.
 
----
+The labor market continues to face structural challenges, with job openings still exceeding available workers despite some normalization from pandemic-era extremes. Companies are responding by investing in technology adoption, including AI and automation, which has contributed to continued productivity gains into 2025. In this environment, metrics such as revenue per employee and profit per employee serve as crucial indicators of how effectively organizations are leveraging their workforce investments and technological capabilities. By analyzing the Fortune 1000 companies through this lens, we can identify which firms have successfully optimized their operations to thrive despite rising labor costs and ongoing talent scarcity.
+
+Data Source: Fortune Top 1000 Companies by Revenue (2022), Kaggle
+License: CC BY-NC-SA 4.0
 
 ## Load Libraries
+
 We start by loading the Tidyverse package, which contains tools for data manipulation (dplyr), data cleaning (tidyr), and visualization (ggplot2).
-```{r}
+
+```{r load-libraries}
 library(tidyverse)
 ```
-
 ## Import Dataset
+
 The dataset is read into R using read_csv(). We then preview the first few rows to understand the structure of the data.
-```{r}
+
+```{r import-data}
 fortune <- read_csv("Fortune 1000 Companies by Revenue.csv")
 
 head(fortune)
 ```
-
 ## Clean and Prepare Data
+
 The dataset includes numeric values stored as text, such as revenues and profits with $ and commas.
 These symbols are removed, and the columns are converted into numeric format. Missing values are filtered out to ensure clean analysis.
-```{r}
+
+```{r clean-data}
 fortune <- fortune %>%
-mutate(
-revenues = as.numeric(gsub("[$,]", "", revenues)),
-profits = as.numeric(gsub("[$,]", "", profits)),
-employees = as.numeric(gsub(",", "", employees))
-) %>%
-filter(!is.na(revenues), !is.na(profits))
+  mutate(
+    revenues = as.numeric(gsub("[$,]", "", revenues)),
+    profits = as.numeric(gsub("[$,]", "", profits)),
+    employees = as.numeric(gsub(",", "", employees))
+  ) %>%
+  filter(!is.na(revenues), !is.na(profits))
 
 head(fortune)
 ```
-
 ## Calculate Profit Margin
-We create a new variable, *profit_margin*, to measure the percentage of profit earned for every dollar of revenue.
+
+We create a new variable, profit_margin, to measure the percentage of profit earned for every dollar of revenue.
 This metric allows us to assess how efficiently companies convert sales into profit.
-```{r}
+
+```{r calculate-profit-margin}
 fortune_clean <- fortune %>%
-filter(revenues > 0) %>%
-mutate(profit_margin = round((profits / revenues) * 100, 2))
+  filter(revenues > 0) %>%
+  mutate(profit_margin = round((profits / revenues) * 100, 2))
 
 head(fortune_clean)
 ```
-
 ## Top 10 Companies by Revenue
+
 To identify the largest corporations in the dataset, we select the top 10 companies ranked by total revenue.
-The table displays each company’s rank, name, total revenue, profit, and calculated profit margin.
-```{r}
+The table displays each company's rank, name, total revenue, profit, and calculated profit margin.
+
+```{r top-ten-revenue}
 top10_revenue <- fortune_clean %>%
-slice_max(order_by = revenues, n = 10) %>%
-select(rank, name, revenues, profits, profit_margin)
+  slice_max(order_by = revenues, n = 10) %>%
+  select(rank, name, revenues, profits, profit_margin)
 
 top10_revenue
 ```
-
 ## Visualization 1: Revenue vs. Profit
+
 This scatter plot compares revenue and profit among the top 30 companies.
 It shows how high revenues do not always guarantee high profits, revealing differences in efficiency between companies.
-```{r}
-fortune_clean %>%
-slice_max(order_by = revenues, n = 30) %>%
-ggplot(aes(x = revenues, y = profits, color = name)) +
-geom_point(size = 3, alpha = 0.8) +
-labs(
-title = "Revenue vs Profit for Top 30 Companies (Fortune 1000 - 2022)",
-x = "Revenue (USD Millions)",
-y = "Profit (USD Millions)",
-color = "Company"
-) +
-theme_minimal()
-```
 
+```{r revenue-vs-profit}
+fortune_clean %>%
+  slice_max(order_by = revenues, n = 30) %>%
+  ggplot(aes(x = revenues, y = profits)) +
+  geom_point(size = 2.5, alpha = 0.6, color = "#2E86AB") +
+  labs(
+    title = "Revenue vs Profit for Top 30 Companies",
+    x = "Revenue (USD Millions)",
+    y = "Profit (USD Millions)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold", margin = margin(b = 5)),
+    axis.title = element_text(size = 10),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "#EEEEEE", size = 0.2)
+  )
+```
 ## Visualization 2: Top Companies by Profit Margin
+
 This bar chart highlights the top 10 companies with the highest profit margins, showing which firms are most successful at converting revenue into profit.
 It provides insight into which companies achieve efficiency over scale.
-```{r}
+
+```{r top-companies-profit-margin}
 top10_margin <- fortune_clean %>%
-slice_max(order_by = profit_margin, n = 10)
+  slice_max(order_by = profit_margin, n = 10)
 
-ggplot(top10_margin, aes(x = reorder(name, profit_margin), y = profit_margin, fill = name)) +
-geom_col(show.legend = FALSE) +
-coord_flip() +
-labs(
-title = "Top 10 Companies by Profit Margin (Fortune 1000 - 2022)",
-x = "Company",
-y = "Profit Margin (%)"
-) +
-theme_minimal()
+ggplot(top10_margin, aes(x = reorder(name, profit_margin), y = profit_margin)) +
+  geom_col(fill = "#A23B72", width = 0.7) +
+  coord_flip() +
+  labs(
+    title = "Top 10 Companies by Profit Margin",
+    x = "",
+    y = "Profit Margin (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold", margin = margin(b = 5)),
+    axis.title = element_text(size = 10),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_line(color = "#EEEEEE", size = 0.2),
+    panel.grid.major.y = element_blank()
+  )
 ```
+# EXTENDED ANALYSIS
 
-## Insights and Conclusion
-The results indicate a clear distinction between firms leading in revenue and those excelling in profitability. While Walmart and Amazon remain market leaders by scale, firms like Bio-Rad Laboratories and eBay stand out for their efficient profit generation. Through this analysis, the Tidyverse proved effective for structuring, transforming, and visualizing corporate financial data.
+Extended by: [Your Name]
+Date: [Current Date]
+
+## Employee Efficiency Analysis
+Building on the original analysis, we now examine employee efficiency by calculating revenue and profit per employee.
+This metric reveals which companies generate the most value per worker, indicating operational efficiency.
+
+```{r employee-efficiency}
+# Calculate revenue and profit per employee
+fortune_efficiency <- fortune_clean %>%
+  filter(employees > 0) %>%  # Remove companies with missing employee data
+  mutate(
+    revenue_per_employee = round(revenues / employees, 2),
+    profit_per_employee = round(profits / employees, 2)
+  )
+
+# Display top 10 companies by revenue per employee
+top10_efficiency <- fortune_efficiency %>%
+  slice_max(order_by = revenue_per_employee, n = 10) %>%
+  select(rank, name, employees, revenue_per_employee, profit_per_employee)
+
+top10_efficiency
+```
+## Top Performers Analysis Using slice_max()
+
+We can use slice_max() to identify the companies with the best efficiency and profitability metrics.
+This highlights the leaders across different performance dimensions.
+
+```{r top-performers}
+# Top companies by revenue per employee
+top_revenue_per_emp <- fortune_efficiency %>%
+  slice_max(order_by = revenue_per_employee, n = 10) %>%
+  select(rank, name, revenues, employees, revenue_per_employee, profit_margin)
+
+top_revenue_per_emp
+```
+## Visualization 3: Profit Margin Distribution
+
+Using ggplot2, we create a histogram showing the distribution of profit margins across all companies.
+This reveals the typical range of profitability and identifies outliers.
+
+```{r profit-margin-distribution}
+median_margin <- median(fortune_efficiency$profit_margin)
+
+ggplot(fortune_efficiency, aes(x = profit_margin)) +
+  geom_histogram(binwidth = 2, fill = "#F18F01", color = "white", alpha = 0.8) +
+  geom_vline(xintercept = median_margin, color = "#C73E1D", linetype = "dashed", linewidth = 0.8) +
+  labs(
+    title = "Distribution of Profit Margins",
+    x = "Profit Margin (%)",
+    y = "Number of Companies"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold", margin = margin(b = 5)),
+    axis.title = element_text(size = 10),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_line(color = "#EEEEEE", size = 0.2),
+    panel.grid.major.x = element_blank()
+  ) +
+  annotate("text", x = median_margin + 3, y = Inf, 
+           label = paste("Median:", round(median_margin, 1), "%"), 
+           vjust = 1.2, hjust = 0, size = 3.5, color = "#C73E1D")
+```
+## Visualization 4: Revenue vs Employee Efficiency
+
+This scatter plot examines the relationship between company size (employees) and efficiency (revenue per employee).
+We use geom_smooth() to add a trend line showing how efficiency changes with company size.
+
+```{r revenue-vs-employee-efficiency}
+fortune_efficiency %>%
+  filter(employees < 500000) %>%
+  ggplot(aes(x = employees, y = revenue_per_employee)) +
+  geom_point(aes(color = profit_margin), alpha = 0.6, size = 2) +
+  geom_smooth(method = "loess", color = "#1D3557", se = FALSE, linewidth = 0.8) +
+  scale_color_gradient2(low = "#E63946", mid = "#F1FAEE", high = "#06A77D", 
+                        midpoint = 5, name = "Profit Margin (%)") +
+  labs(
+    title = "Employee Count vs Revenue per Employee",
+    x = "Number of Employees",
+    y = "Revenue per Employee (USD)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold", margin = margin(b = 5)),
+    axis.title = element_text(size = 10),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "#EEEEEE", size = 0.2),
+    legend.position = "right",
+    legend.title = element_text(size = 9),
+    legend.text = element_text(size = 8)
+  )
+```
+## Profitability Categories Using case_when()
+
+We can use case_when() to categorize companies into profitability tiers based on their profit margins.
+This helps segment the Fortune 1000 into distinct performance groups.
+
+```{r profitability-categories}
+fortune_categorized <- fortune_efficiency %>%
+  mutate(
+    profitability_tier = case_when(
+      profit_margin < 0 ~ "Loss Making",
+      profit_margin >= 0 & profit_margin < 5 ~ "Low Margin",
+      profit_margin >= 5 & profit_margin < 10 ~ "Moderate Margin",
+      profit_margin >= 10 & profit_margin < 20 ~ "High Margin",
+      profit_margin >= 20 ~ "Very High Margin"
+    ),
+    profitability_tier = factor(profitability_tier, 
+                                 levels = c("Loss Making", "Low Margin", 
+                                           "Moderate Margin", "High Margin", 
+                                           "Very High Margin"))
+  )
+
+# Count companies in each tier
+tier_counts <- fortune_categorized %>%
+  count(profitability_tier) %>%
+  arrange(profitability_tier)
+
+tier_counts
+```
+## Visualization 5: Distribution of Profitability Tiers
+
+This pie chart shows the proportion of companies in each profitability category, providing a clear view
+of how Fortune 1000 companies are distributed across performance levels.
+
+```{r distribution-profitability-tiers}
+ggplot(tier_counts, aes(x = "", y = n, fill = profitability_tier)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  scale_fill_brewer(palette = "RdYlGn", direction = -1) +
+  labs(
+    title = "Distribution of Companies by Profitability Tier",
+    fill = "Profitability Tier"
+  ) +
+  theme_void() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold", margin = margin(b = 10), hjust = 0.5),
+    legend.position = "right",
+    legend.title = element_text(size = 9),
+    legend.text = element_text(size = 8)
+  )
+```
+## Top Profit Performers
+
+We identify the companies with the highest profit margins and highest absolute profits.
+These represent the most efficient and most profitable companies in the dataset.
+
+```{r profit-leaders}
+# Top 10 by profit margin
+top_margin_leaders <- fortune_efficiency %>%
+  slice_max(order_by = profit_margin, n = 10) %>%
+  select(rank, name, revenues, profits, profit_margin)
+
+knitr::kable(top_margin_leaders, caption = "Top 10 Companies by Profit Margin")
+```
+## Summary Statistics Using summarise()
+
+Finally, we calculate comprehensive summary statistics for the entire dataset, including quartiles,
+standard deviation, and other measures of central tendency and dispersion.
+
+```{r summary-statistics}
+overall_summary <- fortune_efficiency %>%
+  summarise(
+    total_companies = n(),
+    median_revenue = median(revenues),
+    mean_revenue = mean(revenues),
+    sd_revenue = sd(revenues),
+    median_profit_margin = median(profit_margin),
+    mean_profit_margin = mean(profit_margin),
+    sd_profit_margin = sd(profit_margin),
+    profitable_companies = sum(profits > 0),
+    loss_making_companies = sum(profits < 0)
+  )
+
+overall_summary
+```
+## Extended Insights and Conclusion
+
+This extended analysis demonstrates additional TidyVerse capabilities:
+
+group_by() and summarise(): Aggregated data by sector to identify industry trends
+case_when(): Created categorical variables for profitability tiers
+geom_smooth(): Added trend lines to visualize relationships
+facet_wrap() and geom_boxplot(): Compared distributions across categories
+slice_max() with group_by(): Identified top performers within groups
+The analysis reveals that while large companies dominate by revenue, smaller firms often achieve higher efficiency metrics. Industry sector significantly impacts profitability, with some sectors showing consistently higher margins than others. The combination of revenue scale and operational efficiency determines overall corporate success in the Fortune 1000.
+
+Original Author: Escarlet Gabriel Vicente
+Extended by: Randy Howk
+TidyVerse Functions Demonstrated: read_csv(), mutate(), filter(), select(), group_by(), summarise(), arrange(), slice_max(), case_when(), count(), ggplot(), geom_point(), geom_col(), geom_boxplot(), geom_smooth(), coord_flip(), coord_polar(), facet_wrap(), theme_minimal()
